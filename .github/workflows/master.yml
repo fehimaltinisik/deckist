@@ -26,7 +26,7 @@ jobs:
       working-directory: ./webservice
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: deckist
+        ECR_REPOSITORY: deckist-webservice
         IMAGE_TAG: latest
       run: |
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
