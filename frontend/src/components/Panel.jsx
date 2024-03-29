@@ -1,14 +1,14 @@
 import {useEffect, useState} from 'react';
 import {
     Alert,
-    Button, Checkbox,
+    Button,
+    Checkbox,
     Divider,
     IconButton,
     List,
     ListItem,
     ListItemSecondaryAction,
     ListItemText,
-    Paper,
     Slider,
     Stack,
     TextField,
@@ -18,7 +18,8 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 import {
     addRouteSegmentsByRouteShortName,
-    changeRouteTrailColor, fetchNextHelperRouteSegments,
+    changeRouteTrailColor,
+    fetchNextHelperRouteSegments,
     fetchRouteSegmentsByRouteShortName,
     removeRouteSegmentsByRouteShortName,
     setAnimationSpeed,
@@ -32,8 +33,10 @@ import Box from "@mui/material/Box";
 import {
     INITIAL_STATE_ADD_HELPER_ROUTE_SEGMENT_IN_EVERY_X_MS,
     INITIAL_STATE_ANIMATION_SPEED,
-    INITIAL_STATE_TRAIL_LENGTH
+    INITIAL_STATE_TRAIL_LENGTH,
+    TOTAL_SECONDS_IN_A_DAY
 } from "../constants.js";
+import {isMobile} from "react-device-detect";
 
 
 const ANIMATION_SPEED_VALUE_BY_SLIDER_VALUE = {
@@ -140,7 +143,7 @@ const Panel = () => {
     }
 
     const timeValueFormat = (time) => {
-        const dateUnawareTime = time % 86400;
+        const dateUnawareTime = time % TOTAL_SECONDS_IN_A_DAY;
         return Math.trunc(dateUnawareTime / 60 / 60);
     }
 
@@ -173,7 +176,7 @@ const Panel = () => {
 
     useEffect(() => {
         const intervalId = setInterval(() => {
-            if (isHelpChecked){
+            if (isHelpChecked) {
                 dispatch(fetchNextHelperRouteSegments())
             } else {
                 console.debug("Help me mode is disabled.")
@@ -186,32 +189,52 @@ const Panel = () => {
     }, [isHelpChecked]);
 
     return (
-        <div>
-            <Paper
-                style={{
-                    display:'column',
-                    height:'75vh',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between'
+        <Box
+            display='flex'
+            flexDirection='column'
+            sx={{
+                height: isMobile ? "70vh" : '80vh'
             }}
+        >
+            <Box
+                display='flex'
+                flexDirection='column'
                 sx={{
-                    mx: {xs: 1, md: 1},
-                    px: {xs: 1, md: 3},
-                    py: {xs: 1, md: 2}
+                    borderRadius: 1,
+                    backgroundColor: 'background.paper',
+                    flex: 1,
+                    minHeight: 0,
+                    px: {xs: 3, md: 3},
+                    py: {xs: 2, md: 3},
                 }}
             >
                 <Stack
                     direction="column"
                     spacing={1}
+                    display='flex'
+                    flexDirection='column'
                     sx={{
+                        flex: 1,
+                        minHeight: 0,
                         my: {xs: 1, md: 1},
                     }}
                 >
                     <Stack
                         direction="column"
-                        spacing={1.0}
+                        spacing={1}
+                        display='flex'
+                        flexDirection='column'
+                        sx={{
+                            // height: '100%',
+                            flex: 1,
+                            minHeight: 0,
+                        }}
                     >
-                        <Typography variant="h6" component="h6" align="left">
+                        <Typography
+                            variant="h6"
+                            component="h6"
+                            align="left"
+                        >
                             Routes
                         </Typography>
                         <Stack
@@ -252,81 +275,87 @@ const Panel = () => {
                                 </Alert>
                             )
                         }
-                    </Stack>
-                    <List
-                        style={{
-                            maxHeight: '33vh',
-                            overflow: 'auto',
-                            marginBlockStart: '0.5em',
-                            paddingInlineStart: '0.5em'
-                        }}
-                    >
-                        {
-                            Array.from(routeShortNames).map((routeShortName, index) => (
-                                <ListItem
-                                    key={index}
-                                    sx={{ py: 0}}
-                                >
-                                    <Tooltip title="Click to Change Color">
-                                        <Box
-                                            sx={{
-                                                height: '1em',
-                                                width: '1em',
-                                                bgcolor: rgbToHex(routeSegmentsByRouteShortName.get(routeShortName)?.color || [255, 255, 255]),
-                                                'marginRight': '0.5em',
-                                                px: {xs: 0, md: 0},
-                                            }}
-                                            onClick={() => onChangeRouteColor(routeShortName)}
-                                        >
-                                        </Box>
-                                    </Tooltip>
-                                    <ListItemText primary={routeShortName}/>
-                                    <ListItemSecondaryAction>
-                                        <IconButton
-                                            edge="end"
-                                            aria-label="delete"
-                                            onClick={() => handleRemoveRoute(routeShortName)}
-                                        >
-                                            <DeleteIcon/>
-                                        </IconButton>
-                                    </ListItemSecondaryAction>
-                                </ListItem>
-                            ))
-                        }
-                    </List>
-                    <Stack
-                        direction="row"
-                        spacing={1.5}
-                        alignItems='center'
-                    >
-                        <Typography
-                            variant="p"
-                            component="p"
-                            textAlign="right"
+                        <List
+                            sx={{
+                                flex: 1,
+                                // maxHeight: '33vh',
+                                // display="inline-flex"
+                                overflow: 'auto',
+                                marginBlockStart: '0.5em',
+                                paddingInlineStart: '0.5em'
+                            }}
                         >
-                            Enable Automatic Addition
-                        </Typography>
-                        <Checkbox
-                            checked={isHelpChecked}
-                            onChange={toggleHelpCheckbox}
-                        />
+                            {
+                                Array.from(routeShortNames).map((routeShortName, index) => (
+                                    <ListItem
+                                        key={index}
+                                        sx={{py: 0}}
+                                    >
+                                        <Tooltip title="Click to Change Color">
+                                            <Box
+                                                sx={{
+                                                    height: '1em',
+                                                    width: '1em',
+                                                    bgcolor: rgbToHex(routeSegmentsByRouteShortName.get(routeShortName)?.color || [255, 255, 255]),
+                                                    'marginRight': '0.5em',
+                                                    px: {xs: 0, md: 0},
+                                                }}
+                                                onClick={() => onChangeRouteColor(routeShortName)}
+                                            >
+                                            </Box>
+                                        </Tooltip>
+                                        <ListItemText primary={routeShortName}/>
+                                        <ListItemSecondaryAction>
+                                            <IconButton
+                                                edge="end"
+                                                aria-label="delete"
+                                                onClick={() => handleRemoveRoute(routeShortName)}
+                                            >
+                                                <DeleteIcon/>
+                                            </IconButton>
+                                        </ListItemSecondaryAction>
+                                    </ListItem>
+                                ))
+                            }
+                        </List>
+                        <Button
+                            variant="contained"
+                            color="error"
+                            size="medium"
+                            disabled={loading || routeShortNames.size === 0}
+                            onClick={handleClearAllRoutes}
+                            sx={{
+                                marginTop: 1,
+                            }}
+                        >
+                            Clear All
+                        </Button>
+                        <Stack
+                            direction="row"
+                            alignItems='center'
+                            justifyContent='space-between'
+                        >
+                            <Typography
+                                variant="p"
+                                component="p"
+                                textAlign="right"
+                            >
+                                Add routes in
+                                every {INITIAL_STATE_ADD_HELPER_ROUTE_SEGMENT_IN_EVERY_X_MS / 1000} seconds
+                            </Typography>
+                            <Checkbox
+                                checked={isHelpChecked}
+                                onChange={toggleHelpCheckbox}
+                            />
+                        </Stack>
                     </Stack>
-                    <Button
-                        variant="contained"
-                        color="error"
-                        size="medium"
-                        disabled={loading || routeShortNames.size === 0}
-                        onClick={handleClearAllRoutes}
-                        sx={{
-                            marginTop: 1,
-                        }}
-                    >
-                        Clear All
-                    </Button>
+
                     <Divider/>
                     <Stack
                         direction="column"
-                        flexGrow={1}
+                        style={{
+                            flex: 0
+                        }}
                     >
                         <Typography
                             variant="h6"
@@ -340,7 +369,6 @@ const Panel = () => {
                             spacing={1.5}
                             alignItems='center'
                         >
-
                             <Slider
                                 aria-label="Time"
                                 value={timeValueFormat(userTimeInput)}
@@ -408,8 +436,10 @@ const Panel = () => {
                         </Stack>
                     </Stack>
                 </Stack>
-            </Paper>
-        </div>
+            </Box>
+
+
+        </Box>
     )
         ;
 };

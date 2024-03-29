@@ -8,7 +8,10 @@ import {setUserTimeInput} from "../actions/actions.jsx";
 import Box from "@mui/material/Box";
 import CircularIndeterminate from "./CircularIntermediate.jsx";
 import UpdateIcon from "@mui/icons-material/Update.js";
-import {INITIAL_STATE_TIME_IN_SECONDS} from "../constants.js";
+import {DARK_THEME, INITIAL_STATE_TIME_IN_SECONDS, TOTAL_SECONDS_IN_A_DAY} from "../constants.js";
+import {isMobile} from 'react-device-detect';
+import MapAreaFooter from "./MapAreaFooter.jsx";
+
 
 const digitalClockText = (timestamp) => {
     const hours = Math.trunc(timestamp / 3600)
@@ -32,7 +35,6 @@ const INITIAL_VIEW_STATE = {
     pitch: 37.374216241015446
 };
 
-const DARK_THEME = createTheme({palette: {mode: 'dark'}});
 const MAP_STYLE = 'https://basemaps.cartocdn.com/gl/dark-matter-nolabels-gl-style/style.json';
 const NAV_CONTROL_STYLE = {position: 'absolute', top: 10, left: 10};
 
@@ -61,8 +63,8 @@ export default function MapArea() {
                 if (isHourly) {
                     dispatch(setUserTimeInput(nextTimeStamp));
                 }
-                if (nextTimeStamp > 86400 + INITIAL_STATE_TIME_IN_SECONDS) {
-                    return nextTimeStamp % (86400);
+                if (nextTimeStamp > TOTAL_SECONDS_IN_A_DAY + INITIAL_STATE_TIME_IN_SECONDS) {
+                    return nextTimeStamp % (TOTAL_SECONDS_IN_A_DAY);
                 }
 
                 return nextTimeStamp;
@@ -85,85 +87,73 @@ export default function MapArea() {
 
     routeSegmentsByRouteShortName.forEach((layerDetails, routeShortName) => {
         const color = layerDetails.color
-        layers.push(
-            new TripsLayer({
-                id: `${routeShortName}-trip`,
-                data: layerDetails.segments,
-                getPath: d => d.path,
-                getTimestamps: d => d.timestamps,
-                getColor: color,
-                opacity: 1.0,
-                trailLength: trailLength,
-                currentTime: time,
-                shadowEnabled: false,
-                widthMinPixels: 3,
-            })
-        );
+        layers.push(new TripsLayer({
+            id: `${routeShortName}-trip`,
+            data: layerDetails.segments,
+            getPath: d => d.path,
+            getTimestamps: d => d.timestamps,
+            getColor: color,
+            opacity: 1.0,
+            trailLength: trailLength,
+            currentTime: time,
+            shadowEnabled: false,
+            widthMinPixels: 3,
+        }));
     })
 
-    return (
+    return (<Box
+        position={!isMobile ? 'static' : 'sticky'}
+        sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            height: isMobile ? "60vh" : '80vh',
+            width: isMobile ? "100vw" : "75vw",
+            justifyContent: 'center',
+            alignItems: 'center',
+        }}
+    >
         <ThemeProvider theme={DARK_THEME}>
-            <Paper sx={{}}>
-                <Box
-                    sx={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        height: '80vh',
-                        width: "70vw",
-                        position: "relative",
+            <Paper
+                style={{
+                    display: "flex", flexDirection: "column", alignItems: 'center', justifyContent: 'center', position: "relative", height: "100%", width: "100%",
+                }}
+            >
+                <DeckGL
+                    layers={layers}
+                    initialViewState={INITIAL_VIEW_STATE}
+                    controller={true}
+                    ContextProvider={MapContext.Provider}
+                    style={{
+                        opacity: resolveOpacity(loading),
                     }}
                 >
-                    <DeckGL
-                        layers={layers}
-                        initialViewState={INITIAL_VIEW_STATE}
-                        controller={true}
-                        ContextProvider={MapContext.Provider}
-                        style={{
-                            opacity: resolveOpacity(loading),
-                        }}
-                    >
-                        <StaticMap mapStyle={MAP_STYLE}/>
-                        <NavigationControl style={NAV_CONTROL_STYLE}/>
-                    </DeckGL>
+                    <StaticMap mapStyle={MAP_STYLE}/>
+                    <NavigationControl style={NAV_CONTROL_STYLE}/>
+                </DeckGL>
+                <Stack
+                    direction="row"
+                    spacing={1}
+                    alignItems='center'
+                    style={{
+                        position: "absolute", top: '0.5em', right: '0.75em', zIndex: 1,
+                    }}
+                >
+                    <UpdateIcon
+                        fontSize="large"
+                    />
                     <Typography
-                        variant="h6"
-                        component="h6"
-                        sx={{
-                            position: "absolute",
-                            bottom: '0.25em',
-                            left: '0.75em',
-                        }}
+                        variant={!isMobile ? 'h4' : 'h6'}
+                        component={!isMobile ? 'h4' : 'h6'}
                     >
-                        GTFS | Istanbul
+                        {digitalClockText(time)}
                     </Typography>
-                    <Stack
-                        direction="row"
-                        spacing={1}
-                        alignItems='center'
-                        sx={{
-                            position: "absolute",
-                            top: '0.5em',
-                            right: '0.75em',
-                            zIndex: 1000,
-                        }}
-                    >
-                        <UpdateIcon
-                            fontSize="large"
-                        />
-                        <Typography
-                            variant="h4"
-                            component="h4"
-                        >
-                            {digitalClockText(time)}
-                        </Typography>
-                    </Stack>
+                </Stack>
 
-                    {
-                        loading && <CircularIndeterminate/>
-                    }
-                </Box>
+                <MapAreaFooter
+
+                />
+                {loading && <CircularIndeterminate/>}
             </Paper>
         </ThemeProvider>
-    );
+    </Box>);
 }

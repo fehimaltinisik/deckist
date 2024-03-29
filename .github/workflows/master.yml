@@ -30,6 +30,6 @@ jobs:
         IMAGE_TAG: latest
       run: |
         aws --version
-        aws s3 cp s3://deckist/db/gtfs.db gtfs.db
+        aws s3 cp ${{ secrets.S3_BUCKET_URL }} gtfs.db
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
