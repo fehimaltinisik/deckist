@@ -1,21 +1,24 @@
-from src.models.dto.s3 import DeckRouteSegments
-from src.models.route import RoutesWithTripGeometries
+from typing import Dict
+
+from src.models.deck import DeckGLRoutesWithTripGeometries
+from src.models.dto.s3 import DeckGLRouteTripGeometriesByRouteShortNameObject
 
 
-def map_routes_with_trip_geometries_to_deck_route_segments(
-        route_with_trip_geometries: RoutesWithTripGeometries) -> DeckRouteSegments:
-    route_segments = []
-    for trip_geometry in route_with_trip_geometries.trip_geometries:
-        coordinates = [[coordinate[0], coordinate[1]] for coordinate in trip_geometry.coordinates]
-        timestamps = [coordinate[3] for coordinate in trip_geometry.coordinates]
-        route_segments.append(
-            {
-                'trip_id': trip_geometry.properties['trip_id'],
-                'route_id': trip_geometry.properties['route_id'],
-                'route_short_name': trip_geometry.properties['route_short_name'],
-                'path': coordinates,
-                'timestamps': timestamps
-            }
+def map_routes_with_trip_geometries_to_deck_gl_route_trip_geometries_by_route_short_name_object(
+        deck_gl_routes_with_trip_geometries: DeckGLRoutesWithTripGeometries
+) -> DeckGLRouteTripGeometriesByRouteShortNameObject:
+    trip_details_by_trip_ids: Dict[int, DeckGLRouteTripGeometriesByRouteShortNameObject.TripDetails] = {}
+    for trip_id, trip_geometry in deck_gl_routes_with_trip_geometries.trip_geometries_by_trip_ids.items():
+        trip_details_by_trip_ids[trip_id] = DeckGLRouteTripGeometriesByRouteShortNameObject.TripDetails(
+            trip_id=trip_id,
+            route_id=trip_geometry.properties['route_id'],
+            departure_time=trip_geometry.coordinates[0][3]
         )
 
-    return DeckRouteSegments.parse_obj(route_segments)
+    return DeckGLRouteTripGeometriesByRouteShortNameObject(
+        route_short_name=deck_gl_routes_with_trip_geometries.route_short_name,
+        trip_ids_by_path_ids=deck_gl_routes_with_trip_geometries.trip_ids_by_path_ids,
+        path_coordinates_by_path_ids=deck_gl_routes_with_trip_geometries.path_coordinates_by_path_ids,
+        path_timestamp_difference_by_path_ids=deck_gl_routes_with_trip_geometries.path_timestamp_difference_by_path_ids,
+        trip_details_by_trip_ids=trip_details_by_trip_ids
+    )

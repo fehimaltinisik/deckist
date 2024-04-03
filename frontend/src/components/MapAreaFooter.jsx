@@ -14,19 +14,19 @@ export default function MapAreaFooter() {
             }}
         >
             <Typography
-                variant="body2"
-                component="body2"
+                variant="p"
+                component="p"
             >
                 DeckIst{!isMobile && "  "}&nbsp;-{!isMobile && "  "}&nbsp;
             </Typography>
             <Typography
-                variant="body2"
-                component="body2"
+                variant="p"
+                component="p"
             >
                 Source code {!isMobile && "available"}&nbsp;@&nbsp;
             </Typography>
             <Link
-                variant="body2"
+                variant="p"
                 component="a"
                 href=""
                 target="_blank"
@@ -39,13 +39,14 @@ export default function MapAreaFooter() {
                 !isMobile && (
                     <>
                         <Typography
-                            variant="body2"
-                            component="body2"
+
+                            variant="p"
+                            component="p"
                         >
                             &nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;Made possible with&nbsp;
                         </Typography>
                         <Link
-                            variant="body2"
+                            variant="p"
                             component="a"
                             href="https://deck.gl/"
                             target="_blank"
@@ -55,13 +56,13 @@ export default function MapAreaFooter() {
                             deck.gl
                         </Link>
                         <Typography
-                            variant="body2"
-                            component="body2"
+                            variant="p"
+                            component="p"
                         >
                             &nbsp;and&nbsp;Istanbul&nbsp;
                         </Typography>
                         <Link
-                            variant="body2"
+                            variant="p"
                             component="a"
                             href="https://data.ibb.gov.tr/dataset/public-transport-gtfs-data"
                             target="_blank"
@@ -71,8 +72,8 @@ export default function MapAreaFooter() {
                             GTFS
                         </Link>
                         <Typography
-                            variant="body2"
-                            component="body2"
+                            variant="p"
+                            component="p"
                         >
                             &nbsp;Data
                         </Typography>

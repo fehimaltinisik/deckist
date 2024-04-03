@@ -12,7 +12,7 @@ from src.services import stop as stop_service
 
 def get_trip_geometry(trip: Trip, shapes: List[Shape], *, properties: Dict) -> TripGeometry:
     if not shapes:
-        logger.warning(f"No shapes found for trip: {trip.trip_id}")
+        logger.debug(f"No shapes found for trip: {trip.trip_id}")
 
     stop_times_with_stop_details: List[StopTimeWithStopDetail] = [
         stop_service.map_stop_time_to_stop_time_with_stop_detail(stop_time)

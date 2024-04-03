@@ -5,11 +5,15 @@ from datetime import timedelta
 from typing import Dict
 from typing import List
 from typing import Tuple
+from decimal import Decimal, ROUND_HALF_EVEN
 
 from loguru import logger
 
 from src.entities.gtfs import Shape
 from src.models.gtfs import StopTimeWithStopDetail
+
+
+FivePlaces = Decimal('1e-5')
 
 
 class TripGeometry:
@@ -25,7 +29,11 @@ class TripGeometry:
         self.stop_times_with_stop_details: List[StopTimeWithStopDetail] = stop_times_with_stop_details
         self.properties: Dict = properties or {}
         self.shapes: List[Shape] = shapes
-        self.coordinates: List[List[float]] = []
+        self.coordinates: List[List] = []
+
+    @property
+    def stop_ids(self) -> List[int]:
+        return [stop_time.stop_id for stop_time in self.stop_times_with_stop_details]
 
     def sort(self, strategy: str = 'arrival_time') -> None:
         self.stop_times_with_stop_details.sort(
@@ -49,6 +57,7 @@ class TripGeometry:
         first_departure_time: datetime = self.stop_times_with_stop_details[0].departure_time
         last_arrival_time: datetime = self.stop_times_with_stop_details[-1].arrival_time
         self.stop_times_with_stop_details[0].reset_departure_time_to_origin_date()
+        self.stop_times_with_stop_details[0].reset_arrival_time_to_origin_date()
         is_last_arrival_time_in_next_day: bool = last_arrival_time.day != first_departure_time.day
         if is_last_arrival_time_in_next_day:
             self.stop_times_with_stop_details[-1].reset_arrival_time_to_origin_date(day=2)
@@ -88,7 +97,14 @@ class TripGeometry:
 
     def generate_line_string_geometry(self):
         self.coordinates.extend([
-            [stop_time.stop_lon, stop_time.stop_lat, 0, int(stop_time.arrival_time.timestamp())]
+            [
+                Decimal(stop_time.stop_lon).quantize(FivePlaces, rounding=ROUND_HALF_EVEN),
+                Decimal(stop_time.stop_lat).quantize(FivePlaces, rounding=ROUND_HALF_EVEN),
+                # stop_time.stop_lon,
+                # stop_time.stop_lat,
+                0,
+                int(stop_time.arrival_time.timestamp())
+            ]
             for stop_time
             in self.stop_times_with_stop_details
         ])

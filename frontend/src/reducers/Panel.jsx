@@ -37,7 +37,9 @@ const reducer = (state = initialState, action) => {
                 ...state,
                 loading: false,
             };
-
+        // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+        // ---
+        // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
         case ACTION.FETCH_ROUTE_SEGMENTS_BY_ROUTE_SHORT_NAME_SUCCESS:
             state.routeSegmentsByRouteShortName.set(action.payload.routeShortName, action.payload.layerDetails)
 
@@ -63,6 +65,9 @@ const reducer = (state = initialState, action) => {
                 routeShortNames: state.routeShortNames.add(action.payload.routeShortName),
             };
 
+        // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+        // Panel Actions
+        // --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
         case ACTION.ON_ANIMATION_SPEED_CHANGE:
             console.debug(`Setting animation speed to:${action.payload}`)
             return {

@@ -14,6 +14,8 @@ class RoutesWithTripGeometries:
         self.routes: List[Route] = routes
         #
         self.trip_geometries_by_trip_ids: Dict[int, TripGeometry] = {}
+        self.trip_path_coordinates_by_trip_ids: Dict[int, List[List[float]]] = {}
+        self.trip_timestamps_by_trip_ids: Dict[int, List[int]] = {}
 
     @property
     def trips(self) -> List[Trip]:

@@ -6,44 +6,44 @@ import {INITIAL_STATE_HELPER_ROUTE_SEGMENTS} from "../constants.js";
 const getRandomColor = () => {
     const predefinedColors = [
         // Red
-        [255, 102, 102], // #FF6666
-        [255, 51, 51],   // #FF3333
-        [230, 0, 0],     // #E60000
-        [179, 0, 0],     // #B30000
+        [255, 102, 102],    // #FF6666
+        [255, 51, 51],      // #FF3333
+        [230, 0, 0],        // #E60000
+        [179, 0, 0],        // #B30000
         // [128, 0, 0],     // #800000
         // Orange
-        [255, 179, 102], // #FFB366
-        [255, 153, 51],  // #FF9933
-        [255, 128, 0],   // #FF8000
-        [204, 102, 0],   // #CC6600
+        [255, 179, 102],    // #FFB366
+        [255, 153, 51],     // #FF9933
+        [255, 128, 0],      // #FF8000
+        [204, 102, 0],      // #CC6600
         // [153, 76, 0],    // #994C00
         // Purple
-        [204, 153, 255], // #CC99FF
-        [153, 102, 255], // #9966FF
-        [102, 51, 204],  // #6633CC
-        [76, 46, 102],   // #4C2E66
-        [51, 26, 51],    // #331A33
+        [204, 153, 255],    // #CC99FF
+        [153, 102, 255],    // #9966FF
+        [102, 51, 204],     // #6633CC
+        [76, 46, 102],      // #4C2E66
+        [51, 26, 51],       // #331A33
         // Pink
-        [255, 153, 204], // #FF99CC
-        [255, 102, 178], // #FF66B2
-        [255, 51, 153],  // #FF3399
+        [255, 153, 204],    // #FF99CC
+        [255, 102, 178],    // #FF66B2
+        [255, 51, 153],     // #FF3399
         // [204, 0, 102],   // #CC0066
         // [153, 0, 76],    // #99004C
         // Green
-        [153, 255, 153], // #99FF99
-        [102, 255, 102], // #66FF66
-        [51, 204, 51],   // #33CC33
+        [153, 255, 153],    // #99FF99
+        [102, 255, 102],    // #66FF66
+        [51, 204, 51],      // #33CC33
         // [0, 128, 0],     // #008000
         // [0, 77, 0],      // #004D00
         // Yellow
-        [255, 255, 153], // #FFFF99
-        [255, 255, 102], // #FFFF66
-        [255, 204, 51],  // #FFCC33
+        [255, 255, 153],    // #FFFF99
+        [255, 255, 102],    // #FFFF66
+        [255, 204, 51],     // #FFCC33
         // [204, 153, 0],   // #CC9900
         // [153, 102, 0],   // #996600
         // Violet
-        [204, 153, 255], // #CC99FF
-        [153, 102, 255], // #9966FF
+        [204, 153, 255],    // #CC99FF
+        [153, 102, 255],    // #9966FF
         // [102, 51, 204],  // #6633CC
         // [76, 46, 102],   // #4C2E66
         // [51, 26, 51]     // #331A33
@@ -55,6 +55,20 @@ const getRandomColor = () => {
     return predefinedColors[randomIndex];
 };
 
+
+export const addRouteSegmentsByRouteShortName = ({routeShortName}) => ({
+    type: ACTION.ADD_ROUTE_SEGMENTS_BY_ROUTE_SHORT_NAME,
+    payload: routeShortName,
+});
+
+export const removeRouteSegmentsByRouteShortName = ({routeShortName}) => ({
+    type: ACTION.REMOVE_ROUTE_SEGMENTS_BY_ROUTE_SHORT_NAME,
+    payload: routeShortName,
+});
+
+// --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+// ---
+// --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 
 export const waitUntilRouteSegmentsLoaded = () =>{
     return async (dispatch) => {
@@ -71,10 +85,15 @@ export const fetchRouteSegmentsByRouteShortName = ({routeShortName}) => {
             const url = `${import.meta.env.VITE_BACKEND_SERVICE_URL}/deck/trip-geometries?routeShortName=${routeShortName}`
             const response = await axios.get(url);
             console.debug(`Fetched route segments for route short name: ${routeShortName}`);
-
             dispatch({
                 type: ACTION.FETCH_ROUTE_SEGMENTS_BY_ROUTE_SHORT_NAME_SUCCESS,
-                payload: {routeShortName, layerDetails: {segments: response.data, color: getRandomColor()}}
+                payload: {
+                    routeShortName,
+                    layerDetails: {
+                        segments: response.data,
+                        color: getRandomColor()
+                    }
+                }
             });
         } catch (error) {
             console.error(error);
@@ -83,6 +102,96 @@ export const fetchRouteSegmentsByRouteShortName = ({routeShortName}) => {
     };
 }
 
+
+const mapCompactRouteTripGeometriesToDeckGLTripLayerData = (compactRouteTripGeometries) => {
+    const deckGLTripLayerData = [];
+    for (const [pathId, tripIds] of Object.entries(compactRouteTripGeometries.tripIdsByPathIds)) {
+        const pathCoordinates = compactRouteTripGeometries.pathCoordinatesByPathIds[pathId];
+        for (const tripId of tripIds) {
+            const tripDetails = compactRouteTripGeometries.tripDetailsByTripIds[tripId];
+            const timestampDifferences = compactRouteTripGeometries.pathTimestampDifferenceByPathIds[pathId];
+            const timestamps = timestampDifferences.map((timestampDifference) => tripDetails.departureTime + timestampDifference);
+
+            deckGLTripLayerData.push({
+                routeShortName: compactRouteTripGeometries.routeShortName,
+                tripId: tripDetails.tripId,
+                routeId: tripDetails.routeId,
+                path: pathCoordinates,
+                timestamps: timestamps
+            })
+        }
+    }
+
+    return deckGLTripLayerData;
+}
+
+
+export const fetchCompactRouteTripGeometriesByRouteShortName = ({routeShortName}) => {
+    return async (dispatch) => {
+        try {
+            console.debug(`Fetching compact route trip geometries for route short name: ${routeShortName}`);
+            const url = `${import.meta.env.VITE_BACKEND_SERVICE_URL}/deck/compact-trip-geometries?routeShortName=${routeShortName}`
+            const response = await axios.get(url);
+            console.debug(`Fetched compact route trip geometries for route short name: ${routeShortName}`);
+            const deckGLTripLayerData = mapCompactRouteTripGeometriesToDeckGLTripLayerData(response.data);
+            console.debug(`${deckGLTripLayerData.length} segments of ${routeShortName} found..`);
+
+            dispatch({
+                type: ACTION.FETCH_ROUTE_SEGMENTS_BY_ROUTE_SHORT_NAME_SUCCESS,
+                payload: {
+                    routeShortName,
+                    layerDetails: {
+                        segments: deckGLTripLayerData,
+                        color: getRandomColor()
+                    }
+                }
+            });
+        } catch (error) {
+            console.error(error);
+            dispatch({
+                type: ACTION.FETCH_ROUTE_SEGMENTS_BY_ROUTE_SHORT_NAME_ERROR,
+                payload: error.message
+            });
+        }
+    };
+}
+
+export const fetchNextHelperRouteSegmentsByRouteShortName = () => {
+    return async (dispatch) => {
+        if (INITIAL_STATE_HELPER_ROUTE_SEGMENTS.length === 0) {
+            console.debug('No more route segments to fetch.')
+            return
+        }
+
+        try {
+            const routeShortName = INITIAL_STATE_HELPER_ROUTE_SEGMENTS.pop()
+            console.debug(`Fetching initial compact route trip geometries for route short name: ${routeShortName}`);
+            const url = `${import.meta.env.VITE_BACKEND_SERVICE_URL}/deck/compact-trip-geometries?routeShortName=${routeShortName}`
+            const response = await axios.get(url);
+            console.debug(`Fetched initial compact route trip geometries for route short name: ${routeShortName}`);
+            const deckGLTripLayerData = mapCompactRouteTripGeometriesToDeckGLTripLayerData(response.data);
+            console.debug(`${deckGLTripLayerData.length} segments of ${routeShortName} found..`);
+
+            dispatch({
+                type: ACTION.FETCH_INITIAL_ROUTE_SEGMENTS_SUCCESS,
+                payload: {
+                    routeShortName,
+                    layerDetails: {
+                        segments: deckGLTripLayerData,
+                        color: getRandomColor()
+                    }
+                }
+            });
+        } catch (error) {
+            console.error(error);
+            dispatch({type: ACTION.FETCH_INITIAL_ROUTE_SEGMENTS_ERROR, payload: error.message});
+        }
+    }
+}
+
+// --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+// ---
+// --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
 export const setRefreshRate = (refreshRate) => {
     return (dispatch) => {
         dispatch({
@@ -92,7 +201,7 @@ export const setRefreshRate = (refreshRate) => {
     }
 }
 
-export const changeRouteTrailColor = (routeShortName) => {
+export const setRouteTrailColor = (routeShortName) => {
     return (dispatch) => {
         dispatch({
             type: ACTION.ON_CHANGE_ROUTE_TRAIL_COLOR,
@@ -127,39 +236,3 @@ export const setUserTimeInput = (time) => {
         });
     }
 }
-
-
-export const fetchNextHelperRouteSegments = () => {
-    return async (dispatch) => {
-        if (INITIAL_STATE_HELPER_ROUTE_SEGMENTS.length === 0) {
-            console.debug('No more route segments to fetch.')
-            return
-        }
-
-        try {
-            const routeShortName = INITIAL_STATE_HELPER_ROUTE_SEGMENTS.pop()
-            console.debug(`Fetching segments of ${routeShortName}...`);
-            const response = await axios.get(`${import.meta.env.VITE_S3_BUCKET_URL}/deck/${routeShortName}-route.json`);
-            console.debug(`Fetched segments of ${routeShortName}.`);
-            console.debug(`${response.data.length} segments of ${routeShortName} found..`);
-            dispatch({
-                type: ACTION.FETCH_INITIAL_ROUTE_SEGMENTS_SUCCESS,
-                payload: {routeShortName: routeShortName, layerDetails: {segments: response.data, color: getRandomColor()}}
-            });
-        } catch (error) {
-            console.error(error);
-            dispatch({type: ACTION.FETCH_INITIAL_ROUTE_SEGMENTS_ERROR, payload: error.message});
-        }
-    }
-}
-
-
-export const addRouteSegmentsByRouteShortName = ({routeShortName}) => ({
-    type: ACTION.ADD_ROUTE_SEGMENTS_BY_ROUTE_SHORT_NAME,
-    payload: routeShortName,
-});
-
-export const removeRouteSegmentsByRouteShortName = ({routeShortName}) => ({
-    type: ACTION.REMOVE_ROUTE_SEGMENTS_BY_ROUTE_SHORT_NAME,
-    payload: routeShortName,
-});

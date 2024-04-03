@@ -1,7 +1,10 @@
+import os
 from sys import stdout
 
 from loguru import logger
 
+
+LOG_LEVEL = os.environ.get("LOG_LEVEL", "DEBUG")
 FORMAT = "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>\n"  # noqa
 
 
@@ -29,4 +32,4 @@ def formatter(record):
 
 def configure_logger():
     logger.remove()
-    logger.add(stdout, format=formatter, level="DEBUG", colorize=False)
+    logger.add(stdout, format=formatter, level=LOG_LEVEL, colorize=False)

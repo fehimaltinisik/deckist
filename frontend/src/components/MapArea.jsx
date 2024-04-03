@@ -112,7 +112,6 @@ export default function MapArea() {
             alignItems: 'center',
         }}
     >
-        <ThemeProvider theme={DARK_THEME}>
             <Paper
                 style={{
                     display: "flex", flexDirection: "column", alignItems: 'center', justifyContent: 'center', position: "relative", height: "100%", width: "100%",
@@ -154,6 +153,5 @@ export default function MapArea() {
                 />
                 {loading && <CircularIndeterminate/>}
             </Paper>
-        </ThemeProvider>
     </Box>);
 }

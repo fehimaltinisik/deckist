@@ -2,7 +2,7 @@ import {useEffect, useState} from 'react';
 import {
     Alert,
     Button,
-    Checkbox,
+    Checkbox, createTheme,
     Divider,
     IconButton,
     List,
@@ -12,38 +12,42 @@ import {
     Slider,
     Stack,
     TextField,
+    ThemeProvider,
     Tooltip,
     Typography
 } from "@mui/material";
 import DeleteIcon from '@mui/icons-material/Delete';
 import {
     addRouteSegmentsByRouteShortName,
-    changeRouteTrailColor,
-    fetchNextHelperRouteSegments,
-    fetchRouteSegmentsByRouteShortName,
+    fetchCompactRouteTripGeometriesByRouteShortName,
+    fetchNextHelperRouteSegmentsByRouteShortName,
     removeRouteSegmentsByRouteShortName,
     setAnimationSpeed,
+    setRouteTrailColor,
     setTrailLength,
     setUserTimeInput,
-    waitUntilRouteSegmentsLoaded
+    waitUntilRouteSegmentsLoaded,
 } from "../actions/actions.jsx";
 import {useDispatch, useSelector} from 'react-redux';
 import axios from "axios";
 import Box from "@mui/material/Box";
 import {
+    DARK_THEME,
     INITIAL_STATE_ADD_HELPER_ROUTE_SEGMENT_IN_EVERY_X_MS,
     INITIAL_STATE_ANIMATION_SPEED,
     INITIAL_STATE_TRAIL_LENGTH,
     TOTAL_SECONDS_IN_A_DAY
 } from "../constants.js";
 import {isMobile} from "react-device-detect";
+import {LIGHT_THEME} from "../constants.js";
 
 
 const ANIMATION_SPEED_VALUE_BY_SLIDER_VALUE = {
     0: 0,
-    1: 2,
-    2: 5,
-    3: 10,
+    1: 1,
+    2: 2,
+    3: 5,
+    4: 10,
 }
 
 const rgbToHex = (rgb) => {
@@ -112,7 +116,8 @@ const Panel = () => {
                 }
 
                 console.debug(`Adding route:${newRouteShortName} segments...`);
-                dispatch(fetchRouteSegmentsByRouteShortName({routeShortName: newRouteShortName}));
+                // dispatch(fetchRouteSegmentsByRouteShortName({routeShortName: newRouteShortName}));
+                dispatch(fetchCompactRouteTripGeometriesByRouteShortName({routeShortName: newRouteShortName}));
                 dispatch(waitUntilRouteSegmentsLoaded());
                 dispatch(addRouteSegmentsByRouteShortName({routeShortName: newRouteShortName}))
                 dispatch(waitUntilRouteSegmentsLoaded());
@@ -161,7 +166,7 @@ const Panel = () => {
 
     const onChangeRouteColor = (routeShortName, color) => {
         routeSegmentsByRouteShortName.get(routeShortName).color = color;
-        dispatch(changeRouteTrailColor(routeShortName));
+        dispatch(setRouteTrailColor(routeShortName));
     }
 
     const handleClearAllRoutes = () => {
@@ -177,7 +182,7 @@ const Panel = () => {
     useEffect(() => {
         const intervalId = setInterval(() => {
             if (isHelpChecked) {
-                dispatch(fetchNextHelperRouteSegments())
+                dispatch(fetchNextHelperRouteSegmentsByRouteShortName())
             } else {
                 console.debug("Help me mode is disabled.")
             }
@@ -188,35 +193,27 @@ const Panel = () => {
         }
     }, [isHelpChecked]);
 
+    const theme = createTheme({palette: {mode: 'light'}})
+
     return (
-        <Box
-            display='flex'
-            flexDirection='column'
-            sx={{
-                height: isMobile ? "70vh" : '80vh'
-            }}
-        >
+        <ThemeProvider theme={theme}>
             <Box
                 display='flex'
                 flexDirection='column'
                 sx={{
-                    borderRadius: 1,
-                    backgroundColor: 'background.paper',
-                    flex: 1,
-                    minHeight: 0,
-                    px: {xs: 3, md: 3},
-                    py: {xs: 2, md: 3},
+                    height: isMobile ? "70vh" : '80vh'
                 }}
             >
-                <Stack
-                    direction="column"
-                    spacing={1}
+                <Box
                     display='flex'
                     flexDirection='column'
                     sx={{
+                        borderRadius: 1,
+                        backgroundColor: 'background.paper',
                         flex: 1,
                         minHeight: 0,
-                        my: {xs: 1, md: 1},
+                        px: {xs: 3, md: 3},
+                        py: {xs: 2, md: 3},
                     }}
                 >
                     <Stack
@@ -225,223 +222,243 @@ const Panel = () => {
                         display='flex'
                         flexDirection='column'
                         sx={{
-                            // height: '100%',
                             flex: 1,
                             minHeight: 0,
+                            my: {xs: 1, md: 1},
                         }}
                     >
-                        <Typography
-                            variant="h6"
-                            component="h6"
-                            align="left"
-                        >
-                            Routes
-                        </Typography>
                         <Stack
-                            direction="row"
-                            alignItems="center"
-                            spacing={2}
+                            direction="column"
+                            spacing={1}
+                            display='flex'
+                            flexDirection='column'
+                            sx={{
+                                // height: '100%',
+                                flex: 1,
+                                minHeight: 0,
+                            }}
                         >
-                            <TextField
-                                label="Try 500T"
-                                variant="outlined"
-                                size="small"
-                                disabled={loading}
-                                value={newRouteShortName}
-                                onChange={(e) => setNewNewRouteShortName(e.target.value.toUpperCase())}
-                            />
+                            <Typography
+                                variant="h6"
+                                component="h6"
+                                align="left"
+                                color="text.primary"
+                            >
+                                Routes
+                            </Typography>
+                            <Stack
+                                direction="row"
+                                alignItems="center"
+                                spacing={2}
+                            >
+                                <TextField
+                                    label="Try 500T"
+                                    variant="outlined"
+                                    size="small"
+                                    disabled={loading}
+                                    value={newRouteShortName}
+                                    onChange={(e) => setNewNewRouteShortName(e.target.value.toUpperCase())}
+                                    onKeyUp={(e) => {
+                                        if (e.key === "Enter") {
+                                            handleAddNewRoute(e);
+                                        }
+                                    }}
+                                />
+                                <Button
+                                    variant="contained"
+                                    color="primary"
+                                    size="medium"
+                                    disabled={loading}
+                                    onClick={handleAddNewRoute}
+                                >
+                                    Add
+                                </Button>
+                            </Stack>
+                            {
+                                showRouteSearchAlert && (
+                                    <Alert
+                                        severity={routeSearchAlertType}
+                                        onClose={() => {
+                                            closeRouteSearchAlert();
+                                        }}
+                                        sx={{
+                                            textAlign: 'left',
+                                        }}
+                                    >
+                                        {routeSearchAlertMessage}
+                                    </Alert>
+                                )
+                            }
+                            <List
+                                sx={{
+                                    flex: 1,
+                                    overflow: 'auto',
+                                    marginBlockStart: '0.5em',
+                                    paddingInlineStart: '0.5em'
+                                }}
+                            >
+                                {
+                                    Array.from(routeShortNames).map((routeShortName, index) => (
+                                        <ListItem
+                                            key={index}
+                                            sx={{py: 0}}
+                                        >
+                                            <Tooltip title="Click to Change Color">
+                                                <Box
+                                                    sx={{
+                                                        height: '1em',
+                                                        width: '1em',
+                                                        bgcolor: rgbToHex(routeSegmentsByRouteShortName.get(routeShortName)?.color || [255, 255, 255]),
+                                                        'marginRight': '0.5em',
+                                                        px: {xs: 0, md: 0},
+                                                    }}
+                                                    onClick={() => onChangeRouteColor(routeShortName)}
+                                                >
+                                                </Box>
+                                            </Tooltip>
+                                            <ListItemText primary={ <Typography color="text.primary">{routeShortName}</Typography> }/>
+                                            <ListItemSecondaryAction>
+                                                <IconButton
+                                                    edge="end"
+                                                    aria-label="delete"
+                                                    onClick={() => handleRemoveRoute(routeShortName)}
+                                                >
+                                                    <DeleteIcon/>
+                                                </IconButton>
+                                            </ListItemSecondaryAction>
+                                        </ListItem>
+                                    ))
+                                }
+                            </List>
                             <Button
                                 variant="contained"
-                                color="primary"
+                                color="error"
                                 size="medium"
-                                disabled={loading}
-                                onClick={handleAddNewRoute}
+                                disabled={loading || routeShortNames.size === 0}
+                                onClick={handleClearAllRoutes}
+                                sx={{
+                                    marginTop: 1,
+                                }}
                             >
-                                Add
+                                Clear All
                             </Button>
-                        </Stack>
-                        {
-                            showRouteSearchAlert && (
-                                <Alert
-                                    severity={routeSearchAlertType}
-                                    onClose={() => {
-                                        closeRouteSearchAlert();
-                                    }}
-                                    sx={{
-                                        textAlign: 'left',
-                                    }}
+                            <Stack
+                                direction="row"
+                                alignItems='center'
+                                justifyContent='space-between'
+                            >
+                                <Typography
+                                    variant="p"
+                                    component="p"
+                                    textAlign="right"
+                                    color="text.primary"
                                 >
-                                    {routeSearchAlertMessage}
-                                </Alert>
-                            )
-                        }
-                        <List
-                            sx={{
-                                flex: 1,
-                                // maxHeight: '33vh',
-                                // display="inline-flex"
-                                overflow: 'auto',
-                                marginBlockStart: '0.5em',
-                                paddingInlineStart: '0.5em'
-                            }}
-                        >
-                            {
-                                Array.from(routeShortNames).map((routeShortName, index) => (
-                                    <ListItem
-                                        key={index}
-                                        sx={{py: 0}}
-                                    >
-                                        <Tooltip title="Click to Change Color">
-                                            <Box
-                                                sx={{
-                                                    height: '1em',
-                                                    width: '1em',
-                                                    bgcolor: rgbToHex(routeSegmentsByRouteShortName.get(routeShortName)?.color || [255, 255, 255]),
-                                                    'marginRight': '0.5em',
-                                                    px: {xs: 0, md: 0},
-                                                }}
-                                                onClick={() => onChangeRouteColor(routeShortName)}
-                                            >
-                                            </Box>
-                                        </Tooltip>
-                                        <ListItemText primary={routeShortName}/>
-                                        <ListItemSecondaryAction>
-                                            <IconButton
-                                                edge="end"
-                                                aria-label="delete"
-                                                onClick={() => handleRemoveRoute(routeShortName)}
-                                            >
-                                                <DeleteIcon/>
-                                            </IconButton>
-                                        </ListItemSecondaryAction>
-                                    </ListItem>
-                                ))
-                            }
-                        </List>
-                        <Button
-                            variant="contained"
-                            color="error"
-                            size="medium"
-                            disabled={loading || routeShortNames.size === 0}
-                            onClick={handleClearAllRoutes}
-                            sx={{
-                                marginTop: 1,
-                            }}
-                        >
-                            Clear All
-                        </Button>
-                        <Stack
-                            direction="row"
-                            alignItems='center'
-                            justifyContent='space-between'
-                        >
-                            <Typography
-                                variant="p"
-                                component="p"
-                                textAlign="right"
-                            >
-                                Add routes in
-                                every {INITIAL_STATE_ADD_HELPER_ROUTE_SEGMENT_IN_EVERY_X_MS / 1000} seconds
-                            </Typography>
-                            <Checkbox
-                                checked={isHelpChecked}
-                                onChange={toggleHelpCheckbox}
-                            />
+                                    Add routes in
+                                    every {INITIAL_STATE_ADD_HELPER_ROUTE_SEGMENT_IN_EVERY_X_MS / 1000} seconds
+                                </Typography>
+                                <Checkbox
+                                    checked={isHelpChecked}
+                                    onChange={toggleHelpCheckbox}
+                                />
+                            </Stack>
                         </Stack>
-                    </Stack>
 
-                    <Divider/>
-                    <Stack
-                        direction="column"
-                        style={{
-                            flex: 0
-                        }}
-                    >
-                        <Typography
-                            variant="h6"
-                            component="h6"
-                            align="left"
-                        >
-                            Display Options
-                        </Typography>
+                        <Divider/>
                         <Stack
-                            direction="row"
-                            spacing={1.5}
-                            alignItems='center'
+                            direction="column"
+                            style={{
+                                flex: 0
+                            }}
                         >
-                            <Slider
-                                aria-label="Time"
-                                value={timeValueFormat(userTimeInput)}
-                                getAriaValueText={timeValueText}
-                                valueLabelDisplay="auto"
-                                valueLabelFormat={timeValueText}
-                                step={1}
-                                min={0}
-                                max={23}
-                                marks={true}
-                                onChange={(e, value) => onChangeTime(value)}
-                            />
                             <Typography
-                                variant="p"
-                                component="p"
+                                variant="h6"
+                                component="h6"
+                                align="left"
+                                color="text.primary"
                             >
-                                Time
+                                Display Options
                             </Typography>
-                        </Stack>
-                        <Stack
-                            direction="row"
-                            spacing={1.5}
-                            alignItems='center'
-                        >
-                            <Slider
-                                aria-label="Animation Speed (ms)"
-                                defaultValue={INITIAL_STATE_ANIMATION_SPEED}
-                                getAriaValueText={animationSpeedAriaValueText}
-                                valueLabelFormat={animationSpeedValueText}
-                                step={1}
-                                min={0}
-                                max={3}
-                                valueLabelDisplay="auto"
-                                onChange={(e, value) => onChangeAnimationSpeed(value)}
-                            />
-                            <Typography
-                                variant="p"
-                                component="p"
-                                textAlign="right"
+                            <Stack
+                                direction="row"
+                                spacing={1.5}
+                                alignItems='center'
                             >
-                                AnimationSpeed
-                            </Typography>
-                        </Stack>
-                        <Stack
-                            direction="row"
-                            spacing={1.5}
-                            alignItems='center'
-                        >
-                            <Slider
-                                aria-label="Trail Lenght"
-                                defaultValue={INITIAL_STATE_TRAIL_LENGTH}
-                                min={20}
-                                step={5}
-                                max={120}
-                                valueLabelDisplay="auto"
-                                onChange={(e, value) => onChangeTrailLength(value)}
-                            />
-                            <Typography
-                                variant="p"
-                                component="p"
-                                textAlign="right"
+                                <Slider
+                                    aria-label="Time"
+                                    value={timeValueFormat(userTimeInput)}
+                                    getAriaValueText={timeValueText}
+                                    valueLabelDisplay="auto"
+                                    valueLabelFormat={timeValueText}
+                                    step={1}
+                                    min={0}
+                                    max={23}
+                                    marks={true}
+                                    onChange={(e, value) => onChangeTime(value)}
+                                />
+                                <Typography
+                                    variant="p"
+                                    component="p"
+                                    color="text.primary"
+                                >
+                                    Time
+                                </Typography>
+                            </Stack>
+                            <Stack
+                                direction="row"
+                                spacing={1.5}
+                                alignItems='center'
                             >
-                                TrailLength
-                            </Typography>
+                                <Slider
+                                    aria-label="Animation Speed (ms)"
+                                    defaultValue={INITIAL_STATE_ANIMATION_SPEED}
+                                    getAriaValueText={animationSpeedAriaValueText}
+                                    valueLabelFormat={animationSpeedValueText}
+                                    step={1}
+                                    min={0}
+                                    max={4}
+                                    valueLabelDisplay="auto"
+                                    onChange={(e, value) => onChangeAnimationSpeed(value)}
+                                />
+                                <Typography
+                                    variant="p"
+                                    component="p"
+                                    textAlign="right"
+                                    color="text.primary"
+                                >
+                                    AnimationSpeed
+                                </Typography>
+                            </Stack>
+                            <Stack
+                                direction="row"
+                                spacing={1.5}
+                                alignItems='center'
+                            >
+                                <Slider
+                                    aria-label="Trail Lenght"
+                                    defaultValue={INITIAL_STATE_TRAIL_LENGTH}
+                                    min={20}
+                                    step={5}
+                                    max={120}
+                                    valueLabelDisplay="auto"
+                                    onChange={(e, value) => onChangeTrailLength(value)}
+                                />
+                                <Typography
+                                    variant="p"
+                                    component="p"
+                                    textAlign="right"
+                                    color="text.primary"
+                                >
+                                    TrailLength
+                                </Typography>
+                            </Stack>
                         </Stack>
                     </Stack>
-                </Stack>
+                </Box>
+
+
             </Box>
-
-
-        </Box>
-    )
-        ;
+        </ThemeProvider>
+    );
 };
 
 export default Panel;

@@ -5,7 +5,6 @@ export default function Footer() {
     const year = new Date().getFullYear();
 
     return (
-        <ThemeProvider theme={DARK_THEME}>
             <Typography variant="body2" color="text.secondary" align="center">
                 {'Copyright © '}
                 <Link
@@ -20,6 +19,5 @@ export default function Footer() {
                 {` ${year}.`}
 
             </Typography>
-        </ThemeProvider>
     );
 }

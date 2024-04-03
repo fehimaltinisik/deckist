@@ -1,27 +1,30 @@
 import './App.css'
 import MapArea from "./components/MapArea.jsx";
 import Panel from "./components/Panel.jsx";
-import {Stack} from "@mui/material";
+import {Stack, ThemeProvider} from "@mui/material";
 import {isMobile} from 'react-device-detect';
 import Footer from "./components/Footer.jsx";
+import {DARK_THEME} from "./constants.js";
 
 
 function App() {
     return (
         <>
-            <Stack
-                direction="column"
-                spacing={2}
-            >
+            <ThemeProvider theme={DARK_THEME}>
                 <Stack
-                    direction={isMobile ? 'column' : 'row'}
+                    direction="column"
                     spacing={2}
                 >
-                    <MapArea/>
-                    <Panel/>
+                    <Stack
+                        direction={isMobile ? 'column' : 'row'}
+                        spacing={2}
+                    >
+                        <MapArea/>
+                        <Panel/>
+                    </Stack>
+                    <Footer/>
                 </Stack>
-                <Footer/>
-            </Stack>
+            </ThemeProvider>
         </>
     )
 }
