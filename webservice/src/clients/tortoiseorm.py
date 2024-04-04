@@ -6,7 +6,7 @@ from tortoise import Tortoise
 
 
 DIR_PATH: str = os.path.dirname(os.path.realpath(__file__))
-CONNECTION = os.environ.get('SQLITE_CONNECTION', '../gtfs.db')
+CONNECTION = os.environ.get('SQLITE_CONNECTION', 'gtfs.db')
 
 
 class TortoiseOrm:
