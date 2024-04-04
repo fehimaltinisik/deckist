@@ -2,9 +2,8 @@ name: Deploy to ECR
 
 on:
   push:
-    branches: [ master ]
     tags:
-      - '*'
+      - 'v*.*.*'
 
 jobs:
   build:
