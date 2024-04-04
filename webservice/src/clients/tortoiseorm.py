@@ -5,7 +5,8 @@ from loguru import logger
 from tortoise import Tortoise
 
 
-CONNECTION = os.environ.get('SQLITE_CONNECTION', 'gtfs.db')
+DIR_PATH: str = os.path.dirname(os.path.realpath(__file__))
+CONNECTION = os.environ.get('SQLITE_CONNECTION', '../gtfs.db')
 
 
 class TortoiseOrm:

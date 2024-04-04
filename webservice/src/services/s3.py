@@ -12,7 +12,7 @@ from src.models.deck import DeckGLRoutesWithTripGeometries
 from src.models.dto.s3 import DeckGLRouteTripGeometriesByRouteShortNameObject
 
 S3_CLIENT = boto3.client('s3')
-S3_BUCKET = os.environ.get('S3_BUCKET', 'deckist')
+S3_BUCKET = os.environ.get('S3_BUCKET')
 
 
 def upload_routes_with_trip_geometries_to_s3_as_route_segments_file_object(

@@ -69,19 +69,28 @@ class FeatureCollection(DataTransferObject):
     features: List[Feature] = []
 
 
-class Segment(DataTransferObject):
-    route_short_name: str
-    trip_id: int
-    route_id: int
-    path: List[List[float]] = []
-    timestamps: List[int] = []
-
-    class Config(DataTransferObjectConfig):
-        pass
-
-
 class GetRouteTripGeometriesByRouteShortNameResponse(BaseModel):
+    class Segment(DataTransferObject):
+        route_short_name: str
+        trip_id: int
+        route_id: int
+        path: List[List[float]] = []
+        timestamps: List[int] = []
+
     __root__: List[Segment]
+
+
+class GetDeckGLRouteTripGeometriesByRouteShortNameResponse(DataTransferObject):
+    class TripDetails(DataTransferObject):
+        trip_id: int
+        route_id: int
+        departure_time: int
+
+    route_short_name: str
+    trip_ids_by_path_ids: Dict[int, List[int]]
+    path_coordinates_by_path_ids: Dict[int, List[List[float]]]
+    path_timestamp_difference_by_path_ids: Dict[int, List[int]]
+    trip_details_by_trip_ids: Dict[int, TripDetails]
 
 
 class GetRoutesByRouteShortNameResponse(DataTransferObject):
