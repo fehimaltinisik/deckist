@@ -7,7 +7,7 @@ allowing them to explore the city's bus traffic patterns through captivating vis
 
 ## Live Version
 
-Explore the live version of DeckIst [here](https://deckist.example.com).
+Explore the live version of DeckIst [here](https://master.d1ajan0e0wrjix.amplifyapp.com).
 
 ## Project Overview
 
@@ -28,19 +28,17 @@ of bus traffic trends. For more technical details, refer to the [Frontend README
 
 Project utilizes a straightforward approach to visualize bus traffic in Istanbul. The GTFS dataset includes trips,
 stops, and stop times, with stop times containing arrival data, stops containing geographical and trips containing stop
-sequence information. By leveraging combinations of these datasets, source code interpolates paths between stops in a
-haversine fashion. However, it's worth noting that this approach may result in figures appearing off-road in cases where
-stop distances are too far apart. Additionally, the GTFS dataset also includes shape data, which could provide a more
+sequence information. By leveraging combinations of these datasets, source code interpolates paths between stops with
+haversine method. However, it's worth noting that this approach may result in figures appearing off-road in cases where
+stop distances are too far apart (eg. 500T). Additionally, the GTFS dataset also includes shape data, which could provide a more
 reliable path compared to the interpolation approach used by DeckIst.
 
 ## How to Use
 
-To utilize DeckIst, simply follow these steps:
+To run DeckIst, simply follow these steps:
 
-1. **Install Dependencies**: Ensure that all project dependencies are installed by following the instructions provided
-   in the project's setup guide.
-2. **Run the Webservice**: Start the FastAPI-based backend to handle data processing and serve data endpoints.
-3. **Launch the Frontend**: Access the React-based frontend to visualize the bus traffic data using Deck.gl. The
+1. **Run the Webservice**: Start the FastAPI-based backend to handle data processing and serve data endpoints.
+2. **Launch the Frontend**: Access the React-based frontend to visualize the bus traffic data using Deck.gl. The
    frontend provides a user-friendly interface for exploring the data interactively.
 
 ## License

@@ -28,7 +28,7 @@ export default function MapAreaFooter() {
             <Link
                 variant="p"
                 component="a"
-                href=""
+                href="https://github.com/fehimaltinisik/deckist"
                 target="_blank"
                 rel="noopener"
                 underline="hover"
