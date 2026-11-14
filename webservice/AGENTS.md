@@ -1,22 +1,28 @@
 # AGENTS.md
 
-FastAPI service for DeckIst. Shared repo rules are in the root `AGENTS.md`.
+A day of Istanbul bus traffic. This package is FastAPI, Tortoise, and SQLite GTFS. No accounts. Shared repo rules are in the root `AGENTS.md`.
 
 ## Read before deciding
 
 | Question | Doc |
 | --- | --- |
-| How does the repo fit together? | `../AGENTS.md` |
+| Shared product boundaries | `../AGENTS.md` |
+| Root README (GTFS URL there is stale) | `../README.md` |
 | How do I run this package? | `README.md` |
+| How does the UI run? | `../frontend/README.md` |
 
 ## Boundaries
 
-- No accounts. Do not add a login wall unless the task asks.
-- Leave `/route` and `/routes` in place unless the task says to remove them.
+- Do not add another backend, accounts, or a deploy-target change unless the task asks.
+- Schedules are İETT GTFS (`iett-gtfs-verisi`). The root README link to `public-transport-gtfs-data` is stale. Do not load that feed or serve SQLite `shape` rows.
+- Paths in the API are stop-to-stop. The compact payload dedupes paths and stores timestamp deltas. Keep that response shape.
+- The UI calls `GET /deck/routes` and `GET /deck/compact-trip-geometries` (`routeShortName`). Leave `/route` and `/routes` in place.
+- `S3_BUCKET` is an optional read-through cache. A miss does not write it. Do not add a warming job unless the task asks.
+- Public read API. CORS comes from `ORIGINS`. No secret defaults. Do not log credentials or connection strings.
 
 ## Layering
 
-HTTP, services, persistence, and domain stay in separate packages. New deck behavior copies `src/routers/deck.py` and its service and mapper. Do not add SQL, FastAPI types, or HTTP models into whichever module is already open.
+Routers, services, repositories, entities, and mappers stay separate. New deck behavior copies `src/routers/deck.py` and its service and mapper. Do not add SQL, FastAPI types, or HTTP models into whichever module is already open.
 
 ## Refactoring Rules
 
@@ -60,14 +66,9 @@ HTTP, services, persistence, and domain stay in separate packages. New deck beha
 
 ## Security Rules
 
-This API is a public App Runner service. The frontend is Amplify. There is no API Gateway in this design, and there is no auth on these routes. Do not treat a route as safe because the caller is the frontend.
+Public read API. There is no auth on these routes.
 
-Review security-sensitive changes carefully, by reading the branch. Do not assume the surrounding code is already safe. Slow down when a change touches who can call the process, what an anonymous caller can learn, or where secrets are read or logged:
-
-- Routes and CORS
-- Logging and secrets
-
-1. No secret defaults in code. Read secrets from the environment and list them in `.env.example`.
+1. No secret defaults in code. Read configuration from the environment.
 
 2. Do not log credentials, connection strings, or query strings that carry them.
 

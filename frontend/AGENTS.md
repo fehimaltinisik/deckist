@@ -1,6 +1,6 @@
 # AGENTS.md
 
-DeckIst map UI. Callers are anonymous. There is no login. Shared repo rules are in the root `AGENTS.md`.
+A day of Istanbul bus traffic. This package is the Vite, React, and deck.gl map. Applicants, a panel, and grants do not exist here. Shared repo rules are in the root `AGENTS.md`.
 
 ## Readability
 
@@ -14,7 +14,5 @@ Backend review of this UI has to be possible without parsing JSX. Write control 
 
 ## HTTP
 
-- Calls go through axios in `src/actions/actions.jsx` against `VITE_BACKEND_SERVICE_URL`.
-- Do not add a token, a refresh cookie, or RTK Query unless the task asks.
-- Route and time state stays in Redux memory. Do not write it to `localStorage`.
-- Keep the compact-geometry mapping in `src/actions/actions.jsx` aligned with the backend response. Do not change field names on one side only.
+- Calls go through axios in `src/actions/actions.jsx` against `VITE_BACKEND_SERVICE_URL`. There is no RTK Query, refresh cookie, or access token. Do not add them for the public demo.
+- The compact mapper is the deck.gl contract. Do not change `{ path, timestamps }` or rename `routeShortName` on one side only. Helper lines live in `INITIAL_STATE_HELPER_ROUTE_SEGMENTS`.

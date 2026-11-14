@@ -1,6 +1,6 @@
 # AGENTS.md
 
-DeckIst is one repo with two packages: `webservice/` (FastAPI) and `frontend/` (Vite, React, deck.gl).
+DeckIst is one repo with two packages: `webservice/` (FastAPI) and `frontend/` (Vite, React, deck.gl). It shows a day of Istanbul bus traffic.
 
 Cursor loads this file together with the `AGENTS.md` next to the code you are editing. Shared rules stay here. Package rules stay in the package file.
 
@@ -14,11 +14,6 @@ Cursor loads this file together with the `AGENTS.md` next to the code you are ed
 
 ## Boundaries
 
-- This repo is the transit visualization. Do not add another backend, accounts, or a deploy-target change unless the task asks.
+- Schedules are İETT GTFS (`iett-gtfs-verisi`). The root README link to `public-transport-gtfs-data` is stale. Do not load that feed or serve SQLite `shape` rows.
+- Do not add another backend, accounts, or a deploy-target change unless the task asks.
 - Update `master` from `origin`, branch off that commit, and do not commit on `master`.
-
-## Instructions
-
-- Keep a change inside the package it belongs to. A frontend task does not edit the webservice, and the reverse, unless the task says both.
-- Do not rename variables, edit unrelated imports, or clean up files outside the task.
-- Prefer the existing module layout over a new pattern.
