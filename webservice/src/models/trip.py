@@ -2,15 +2,17 @@ import itertools
 import math
 from datetime import datetime
 from datetime import timedelta
+from functools import lru_cache
 from typing import Dict
 from typing import List
+from typing import Optional
 from typing import Tuple
 from decimal import Decimal, ROUND_HALF_EVEN
 
 from loguru import logger
 
-from src.entities.gtfs import Shape
 from src.models.gtfs import StopTimeWithStopDetail
+from src.models.polyline import RoutePathProjection
 
 
 FivePlaces = Decimal('1e-5')
@@ -22,13 +24,13 @@ class TripGeometry:
             *,
             trip_id: int,
             stop_times_with_stop_details: List[StopTimeWithStopDetail],
-            shapes: List[Shape],
-            properties: Dict
+            properties: Dict,
+            route_path_projection: Optional[RoutePathProjection] = None
     ):
         self.trip_id: int = trip_id
         self.stop_times_with_stop_details: List[StopTimeWithStopDetail] = stop_times_with_stop_details
         self.properties: Dict = properties or {}
-        self.shapes: List[Shape] = shapes
+        self.route_path_projection: Optional[RoutePathProjection] = route_path_projection
         self.coordinates: List[List] = []
 
     @property
@@ -50,6 +52,11 @@ class TripGeometry:
 
     def fill_geometry(self):
         self.sort_by_stop_sequence()
+        if self.route_path_projection:
+            self.reset_first_departure_and_last_arrival_times_to_origin_date()
+            self.generate_line_string_geometry_along_route_path()
+            return
+
         self.estimate_arrival_times_by_haversine_interpolation()
         self.generate_line_string_geometry()
 
@@ -109,6 +116,21 @@ class TripGeometry:
             in self.stop_times_with_stop_details
         ])
 
+    def generate_line_string_geometry_along_route_path(self):
+        departure_timestamp: float = self.stop_times_with_stop_details[0].departure_time.timestamp()
+        total_seconds: float = self.stop_times_with_stop_details[-1].arrival_time.timestamp() - departure_timestamp
+
+        self.coordinates.extend([
+            [
+                _quantize_to_five_places(coordinate[0]),
+                _quantize_to_five_places(coordinate[1]),
+                0,
+                int(departure_timestamp + total_seconds * progress)
+            ]
+            for coordinate, progress
+            in self.route_path_projection.progress_vertices
+        ])
+
     @staticmethod
     def haversine_distance_between(left: StopTimeWithStopDetail, right: StopTimeWithStopDetail) -> float:
         # Radius of the Earth in kilometers
@@ -127,3 +149,8 @@ class TripGeometry:
         distance = radius_of_earth_in_kilometers * c
 
         return distance
+
+
+@lru_cache(maxsize=65536)
+def _quantize_to_five_places(value: float) -> Decimal:
+    return Decimal(value).quantize(FivePlaces, rounding=ROUND_HALF_EVEN)

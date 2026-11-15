@@ -6,7 +6,6 @@ from tortoise.expressions import Subquery
 from tortoise.query_utils import Prefetch
 
 from src.entities.gtfs import Route
-from src.entities.gtfs import Shape
 from src.entities.gtfs import StopTime
 from src.entities.gtfs import Trip
 

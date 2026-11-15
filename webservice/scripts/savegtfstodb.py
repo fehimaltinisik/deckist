@@ -1,4 +1,3 @@
-import csv
 import importlib.resources
 
 import numpy as np
@@ -11,14 +10,12 @@ from src.clients import TortoiseOrm
 from src.config.csvfiles import GTFS_DATA_CSV_FILE_READ_OPTIONS
 from src.config.csvfiles import GTFS_RESOURCE_PATH
 from src.repositories import route_repository
-from src.repositories import shape_repository
 from src.repositories import stop_repository
 from src.repositories import trip_repository
 from src.repositories import stop_time_repository
 
 
 ROUTES_CSV_PATH: str = importlib.resources.path(GTFS_RESOURCE_PATH, 'routes.clean.csv').__str__()
-SHAPES_CSV_PATH: str = importlib.resources.path(GTFS_RESOURCE_PATH, 'shapes.csv').__str__()
 TRIPS_CSV_PATH: str = importlib.resources.path(GTFS_RESOURCE_PATH, 'trips.clean.csv').__str__()
 STOPS_CSV_PATH: str = importlib.resources.path(GTFS_RESOURCE_PATH, 'stops.clean.csv').__str__()
 STOP_TIMES_CSV_PATH: str = importlib.resources.path(GTFS_RESOURCE_PATH, 'stop_times.clean.csv').__str__()
@@ -46,26 +43,6 @@ async def save_routes(batch_size: int = 1000):
         await route_repository.create_many(batch.to_dict('records'))
         logger.debug(f'{i}. route batch saved successfully!')
     logger.info('Routes saved to SQLite successfully!')
-
-
-async def save_shapes(batch_size: int = 1000):
-    shapes: DataFrame = pd.read_csv(
-        SHAPES_CSV_PATH,
-        **{
-            'encoding': 'windows-1254',
-            'sep': ',',
-            'quotechar': '"',
-            'quoting': csv.QUOTE_ALL
-        }
-    )
-    logger.info("Read shapes from CSV...")
-    logger.info('Saving shapes to SQLite...')
-    n_of_records = shapes.shape[0]
-    for i, (_, batch) in enumerate(shapes.groupby(np.arange(n_of_records) // batch_size)):
-        logger.debug(f'{i}. shape batch shape:{batch.shape}')
-        await shape_repository.create_many(batch.to_dict('records'))
-        logger.debug(f'{i}. shape batch saved successfully!')
-    logger.info('Shapes saved to SQLite successfully!')
 
 
 async def save_trips(batch_size: int = 1000):
@@ -129,7 +106,6 @@ async def run():
     logger.info('Saving GTFS resources to SQLite...')
     await TortoiseOrm.init()
     await save_routes()
-    # await save_shapes()
     await save_trips()
     await save_stops()
     await save_stop_times()

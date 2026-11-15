@@ -29,12 +29,14 @@ of bus traffic trends. For more technical details, refer to the [Frontend README
 
 ## Approach
 
-Project utilizes a straightforward approach to visualize bus traffic in Istanbul. The GTFS dataset includes trips,
-stops, and stop times, with stop times containing arrival data, stops containing geographical and trips containing stop
-sequence information. By leveraging combinations of these datasets, source code interpolates paths between stops with
-haversine method. However, it's worth noting that this approach may result in figures appearing off-road in cases where
-stop distances are too far apart (eg. 500T). Additionally, the GTFS dataset also includes shape data, which could provide a more
-reliable path compared to the interpolation approach used by DeckIst.
+Project utilizes a straightforward approach to visualize bus traffic in Istanbul. The İETT GTFS dataset tells when
+buses run: trips, stops, and stop times, where each trip has timed first and last stops. It has no shapes, so the
+on-road paths come from İETT Hat Güzergahları, a GeoJSON of route lines joined to GTFS routes by route code
+(`route_code` = `GUZERGAH_KODU`), or by line and direction when the code is missing.
+
+Each trip's stops are projected onto its route line, and the trip time is spread along the distance driven, so buses
+follow the road instead of jumping between stops. When a trip has no route line, or its stops do not fit the line,
+DeckIst falls back to straight segments between stops with haversine-interpolated times.
 
 ## How to Use
 

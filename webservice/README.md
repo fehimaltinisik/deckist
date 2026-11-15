@@ -38,7 +38,7 @@ Downloaded files and the database are gitignored.
 python scripts/downloadgtfs.py
 ```
 
-5. `scripts/preprocessgtfs.py`: Reads the raw `;`-separated UTF-8 files, repairs double-encoded route names, normalizes stop coordinates (stops without usable coordinates are dropped together with their stop times) and writes `*.clean.csv` files.
+5. `scripts/preprocessgtfs.py`: Reads the raw UTF-8 files, repairs double-encoded route names, normalizes stop coordinates (stops without usable coordinates are dropped together with their stop times, and trips that lose a timed first or last stop are dropped) and writes `*.clean.csv` files.
 ```bash
 python scripts/preprocessgtfs.py
 ```
@@ -46,6 +46,16 @@ python scripts/preprocessgtfs.py
 6. `scripts/savegtfstodb.py`: Saves the cleaned CSVs to a SQLite database using the Tortoise ORM. Start from an empty database; running this script will create a local SQLite database.
 ```bash
 python scripts/savegtfstodb.py
+```
+
+7. `scripts/saveroutepathstodb.py`: Loads the Hat Güzergahları GeoJSON into the `route_path` table of the same database. Lines are simplified (~5 m) and rounded to 5 decimals. The API uses them to draw trips on the road.
+```bash
+python scripts/saveroutepathstodb.py
+```
+
+### Tests
+```bash
+python -m pytest
 ```
 
 ### Configuration

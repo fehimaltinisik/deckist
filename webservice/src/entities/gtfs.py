@@ -30,15 +30,17 @@ class Route(Model):
         table = 'route'
 
 
-class Shape(Model):
-    shape_id = fields.IntField(index=True)
-    shape_pt_lat = fields.FloatField()
-    shape_pt_lon = fields.FloatField()
-    shape_pt_sequence = fields.IntField()
-    shape_dist_traveled = fields.FloatField()
+class RoutePath(Model):
+    route_path_id = fields.IntField(pk=True)
+    route_code = fields.CharField(max_length=63, index=True)
+    route_short_name = fields.CharField(max_length=255, index=True)
+    direction_id = fields.SmallIntField(null=True)
+    departure_no = fields.IntField()
+    length_in_meters = fields.FloatField()
+    coordinates = fields.TextField()
 
     class Meta:
-        table = 'shape'
+        table = 'route_path'
 
 
 class Trip(Model):
