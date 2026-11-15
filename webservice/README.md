@@ -28,8 +28,8 @@ Project uses small SQLite database to store GTFS data. You can create the databa
 Run the scripts from the `webservice` directory with `PYTHONPATH=.` so they can import `src`.
 
 Data sources:
-- [İETT GTFS](https://data.ibb.gov.tr/dataset/iett-gtfs-verisi) for routes, trips, stops and stop times.
-- [İETT Hat Güzergahları](https://data.ibb.gov.tr/dataset/iett-hat-guzergahlari) for on-road route geometries.
+- [İETT GTFS](https://data.ibb.gov.tr/dataset/iett-gtfs-verisi) for routes, trips, stops and stop times. İETT is Istanbul's public bus operator.
+- [İETT Hat Güzergahları](https://data.ibb.gov.tr/dataset/iett-hat-guzergahlari) ("line routes") for on-road route geometries.
 
 Downloaded files and the database are gitignored.
 
@@ -38,7 +38,7 @@ Downloaded files and the database are gitignored.
 python scripts/downloadgtfs.py
 ```
 
-5. `scripts/preprocessgtfs.py`: Reads the raw UTF-8 files, repairs double-encoded route names, normalizes stop coordinates (stops without usable coordinates are dropped together with their stop times, and trips that lose a timed first or last stop are dropped) and writes `*.clean.csv` files.
+5. `scripts/preprocessgtfs.py`: Reads the raw UTF-8 files, repairs double-encoded route names, normalizes stop coordinates (stops without usable coordinates are dropped together with their stop times, and trips whose first or last stop is untimed or dropped are removed) and writes `*.clean.csv` files.
 ```bash
 python scripts/preprocessgtfs.py
 ```
@@ -52,6 +52,20 @@ python scripts/savegtfstodb.py
 ```bash
 python scripts/saveroutepathstodb.py
 ```
+
+### How trips are drawn
+
+GTFS has no shapes, so every trip is matched to a route line from the `route_path` table:
+
+1. A route line whose code (`GUZERGAH_KODU`) equals the GTFS `route_code`, for example `500T_G_D0`.
+2. Otherwise a route line of the same line and direction (`YON`: `GİDİŞ` is direction `0`, `DÖNÜŞ` is `1`), preferring the main departure (`DEPAR_NO` `0`), then the longest.
+
+The trip's stops are projected onto that line in order (`src/services/geometry.py`). The line is trimmed to the first
+and last stop, and the time between the first departure and the last arrival is spread over the distance along it.
+A few middle stops may sit off the line; the first and last stops must fit.
+
+When a trip has no route line, or its stops do not fit, it is drawn as straight segments between stops with times
+spread by haversine distance. With the 2026 feed this affects about 0.05% of trips.
 
 ### Tests
 ```bash

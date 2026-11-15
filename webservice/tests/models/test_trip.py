@@ -4,9 +4,9 @@ from typing import List
 
 import pytest
 
-from src.models import polyline
 from src.models.gtfs import StopTimeWithStopDetail
 from src.models.trip import TripGeometry
+from src.services import geometry as geometry_service
 
 STRAIGHT_PATH = [[29.00, 41.0], [29.01, 41.0], [29.02, 41.0], [29.03, 41.0]]
 DEPARTURE = datetime(2026, 11, 15, 6, 40, tzinfo=timezone.utc)
@@ -42,7 +42,7 @@ def _stop_times() -> List[StopTimeWithStopDetail]:
 class TestFillGeometry:
     def test_given_route_path_projection_when_filled_then_coordinates_follow_route_path(self):
         stop_times = sorted(_stop_times(), key=lambda stop_time: stop_time.stop_sequence)
-        projection = polyline.project_stops_onto_route_path(
+        projection = geometry_service.project_stops_onto_route_path(
             [[stop_time.stop_lon, stop_time.stop_lat] for stop_time in stop_times], STRAIGHT_PATH
         )
         trip_geometry = TripGeometry(trip_id=1, stop_times_with_stop_details=_stop_times(), properties={}, route_path_projection=projection)
@@ -54,7 +54,7 @@ class TestFillGeometry:
 
     def test_given_route_path_projection_when_filled_then_timestamps_span_departure_to_arrival(self):
         stop_times = sorted(_stop_times(), key=lambda stop_time: stop_time.stop_sequence)
-        projection = polyline.project_stops_onto_route_path(
+        projection = geometry_service.project_stops_onto_route_path(
             [[stop_time.stop_lon, stop_time.stop_lat] for stop_time in stop_times], STRAIGHT_PATH
         )
         trip_geometry = TripGeometry(trip_id=1, stop_times_with_stop_details=_stop_times(), properties={}, route_path_projection=projection)

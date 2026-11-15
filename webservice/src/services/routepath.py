@@ -7,10 +7,10 @@ import orjson
 
 from src.entities.gtfs import Route
 from src.entities.gtfs import RoutePath
-from src.models import polyline
 from src.models.gtfs import StopTimeWithStopDetail
 from src.models.polyline import RoutePathProjection
 from src.repositories import route_path_repository
+from src.services import geometry as geometry_service
 
 
 async def get_route_paths_by_route_short_name(route_short_name: str) -> List[RoutePath]:
@@ -41,7 +41,7 @@ def project_stops_onto_route_path(
 ) -> Optional[RoutePathProjection]:
     key = (route_path.route_path_id, tuple(stop_time.stop_id for stop_time in stop_times_with_stop_details))
     if key not in route_path_projections_by_keys:
-        route_path_projections_by_keys[key] = polyline.project_stops_onto_route_path(
+        route_path_projections_by_keys[key] = geometry_service.project_stops_onto_route_path(
             [[stop_time.stop_lon, stop_time.stop_lat] for stop_time in stop_times_with_stop_details],
             orjson.loads(route_path.coordinates)
         )
