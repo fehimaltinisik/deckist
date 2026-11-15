@@ -102,14 +102,17 @@ def preprocess_routes():
     is_shifted = routes['route_type'] == ''
     logger.warning(f'Resetting {is_shifted.sum()} route rows shifted by a ";" in route_long_name: {routes.loc[is_shifted, "route_id"].tolist()}')
     routes.loc[is_shifted, ['route_type', 'route_desc', 'route_code']] = [BUS_ROUTE_TYPE, '', '']
-    for column in ('route_long_name', 'route_desc'):
+    for column in ('route_short_name', 'route_long_name', 'route_desc', 'route_code'):
         routes[column] = routes[column].apply(repair_double_encoded_text)
     routes.to_csv(_clean_csv_path('routes.clean.csv'), index=False, encoding=GTFS_DATA_ENCODING)
     logger.info(f'Preprocessed {routes.shape[0]} routes')
 
 
-def preprocess_trips():
+def preprocess_trips(trip_ids: Set[str]):
     trips: DataFrame = pd.read_csv(TRIPS_CSV_PATH, **GTFS_RAW_CSV_FILE_READ_OPTIONS)
+    has_stop_times = trips['trip_id'].isin(trip_ids)
+    logger.warning(f'Dropping {(~has_stop_times).sum()} trips without timed first and last stops')
+    trips = trips[has_stop_times]
     trips.to_csv(_clean_csv_path('trips.clean.csv'), index=False, encoding=GTFS_DATA_ENCODING)
     logger.info(f'Preprocessed {trips.shape[0]} trips')
 
@@ -128,23 +131,36 @@ def preprocess_stops() -> Set[str]:
     return set(stops['stop_id'])
 
 
-def preprocess_stop_times(stop_ids: Set[str]):
+def preprocess_stop_times(stop_ids: Set[str]) -> Set[str]:
     stop_times: DataFrame = pd.read_csv(STOP_TIMES_CSV_PATH, **GTFS_RAW_STOP_TIMES_CSV_FILE_READ_OPTIONS)
     has_stop = stop_times['stop_id'].isin(stop_ids)
     logger.warning(f'Dropping {(~has_stop).sum()} stop_times of dropped stops')
     stop_times = stop_times[has_stop].copy()
+    trip_ids = _find_trip_ids_with_timed_first_and_last_stops(stop_times)
+    stop_times = stop_times[stop_times['trip_id'].isin(trip_ids)].copy()
     stop_times['arrival_time'] = stop_times['arrival_time'].apply(fix_broken_timestamp)
     stop_times['departure_time'] = stop_times['departure_time'].apply(fix_broken_timestamp)
     stop_times.to_csv(_clean_csv_path('stop_times.clean.csv'), index=False, encoding=GTFS_DATA_ENCODING)
     logger.info(f'Preprocessed {stop_times.shape[0]} stop_times')
 
+    return trip_ids
+
 
 def main():
     configure_logger()
     preprocess_routes()
-    preprocess_trips()
     stop_ids = preprocess_stops()
-    preprocess_stop_times(stop_ids)
+    trip_ids = preprocess_stop_times(stop_ids)
+    preprocess_trips(trip_ids)
+
+
+def _find_trip_ids_with_timed_first_and_last_stops(stop_times: DataFrame) -> Set[str]:
+    ordered = stop_times.assign(sequence=stop_times['stop_sequence'].astype(int)).sort_values(['trip_id', 'sequence'])
+    is_timed = (ordered['arrival_time'] != '') & (ordered['departure_time'] != '')
+    by_trip = is_timed.groupby(ordered['trip_id'])
+    has_timed_ends = by_trip.first() & by_trip.last()
+
+    return set(has_timed_ends[has_timed_ends].index)
 
 
 def _clean_csv_path(filename: str) -> str:
