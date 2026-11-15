@@ -27,7 +27,9 @@ To run DeckIst Frontend locally, follow these steps:
     npm install
     ```
 
-4. Start the development server:
+4. Set `VITE_BACKEND_SERVICE_URL` (see `.env.example`) to the webservice URL.
+
+5. Start the development server:
     ```
     npm run dev
     ```

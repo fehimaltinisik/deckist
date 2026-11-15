@@ -34,9 +34,10 @@ async def save_routes(batch_size: int = 1000):
             'route_short_name': str,
             'route_long_name': str
         },
-        converters={'route_desc': str},
+        converters={'route_desc': str, 'route_long_name': str},
         **GTFS_DATA_CSV_FILE_READ_OPTIONS
     )
+    routes['route_code'] = routes['route_code'].astype(object).where(routes['route_code'].notna(), None)
     logger.info("Read routes from CSV...")
     logger.info('Saving routes to SQLite...')
     n_of_records: int = routes.shape[0]
@@ -70,6 +71,7 @@ async def save_shapes(batch_size: int = 1000):
 async def save_trips(batch_size: int = 1000):
     trips: DataFrame = pd.read_csv(
         TRIPS_CSV_PATH,
+        converters={'trip_headsign': str},
         **GTFS_DATA_CSV_FILE_READ_OPTIONS
     )
     logger.info("Read trips from CSV...")
@@ -77,7 +79,8 @@ async def save_trips(batch_size: int = 1000):
     n_of_records = trips.shape[0]
     for i, (_, batch) in enumerate(trips.groupby(np.arange(n_of_records) // batch_size)):
         logger.debug(f'{i}. trip batch shape:{batch.shape}')
-        batch['direction_id'] = batch['direction_id'].astype('Int64')
+        direction_ids = batch['direction_id'].astype('Int64').astype(object)
+        batch['direction_id'] = direction_ids.where(direction_ids.notna(), None)
         await trip_repository.create_many(batch.to_dict('records'))
         logger.debug(f'{i}. trip batch batch saved successfully!')
     logger.info('Trips saved to SQLite successfully!')
@@ -86,6 +89,7 @@ async def save_trips(batch_size: int = 1000):
 async def save_stops(batch_size: int = 1000):
     stops: DataFrame = pd.read_csv(
         STOPS_CSV_PATH,
+        converters={'stop_code': str, 'stop_desc': str},
         **GTFS_DATA_CSV_FILE_READ_OPTIONS
     )
     logger.info("Read stops from CSV...")

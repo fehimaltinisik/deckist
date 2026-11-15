@@ -1,7 +1,8 @@
 # DeckIst
 
 DeckIst is a hobby project that offers a visual depiction of daily bus traffic in Istanbul. Leveraging
-the [GTFS dataset](https://data.ibb.gov.tr/dataset/public-transport-gtfs-data) provided by The Istanbul Metropolitan
+the [İETT GTFS dataset](https://data.ibb.gov.tr/dataset/iett-gtfs-verisi) and
+[İETT Hat Güzergahları](https://data.ibb.gov.tr/dataset/iett-hat-guzergahlari) provided by The Istanbul Metropolitan
 Municipality, DeckIst employs [Deck.gl](https://deck.gl/) by Uber to offer an enjoyable visual experience for users,
 allowing them to explore the city's bus traffic patterns through captivating visualizations. Inspired Uber's visualization of [NYC Taxi Trip](https://deck.gl/examples/trips-layer) data.
 

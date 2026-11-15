@@ -14,6 +14,6 @@ Cursor loads this file together with the `AGENTS.md` next to the code you are ed
 
 ## Boundaries
 
-- Schedules are İETT GTFS (`iett-gtfs-verisi`). The root README link to `public-transport-gtfs-data` is stale. Do not load that feed or serve SQLite `shape` rows.
+- Schedules are İETT GTFS (`iett-gtfs-verisi`). Do not load the `public-transport-gtfs-data` feed or its shapes.
 - Do not add another backend, accounts, or a deploy-target change unless the task asks.
 - Update `master` from `origin`, branch off that commit, and do not commit on `master`.

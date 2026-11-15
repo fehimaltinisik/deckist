@@ -7,14 +7,14 @@ A day of Istanbul bus traffic. This package is FastAPI, Tortoise, and SQLite GTF
 | Question | Doc |
 | --- | --- |
 | Shared product boundaries | `../AGENTS.md` |
-| Root README (GTFS URL there is stale) | `../README.md` |
+| Root README | `../README.md` |
 | How do I run this package? | `README.md` |
 | How does the UI run? | `../frontend/README.md` |
 
 ## Boundaries
 
 - Do not add another backend, accounts, or a deploy-target change unless the task asks.
-- Schedules are İETT GTFS (`iett-gtfs-verisi`). The root README link to `public-transport-gtfs-data` is stale. Do not load that feed or serve SQLite `shape` rows.
+- Schedules are İETT GTFS (`iett-gtfs-verisi`). Do not load the `public-transport-gtfs-data` feed or its shapes.
 - Paths in the API are stop-to-stop. The compact payload dedupes paths and stores timestamp deltas. Keep that response shape.
 - The UI calls `GET /deck/routes` and `GET /deck/compact-trip-geometries` (`routeShortName`). Leave `/route` and `/routes` in place.
 - `S3_BUCKET` is an optional read-through cache. A miss does not write it. Do not add a warming job unless the task asks.

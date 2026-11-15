@@ -64,7 +64,7 @@ export default function MapAreaFooter() {
                         <Link
                             variant="p"
                             component="a"
-                            href="https://data.ibb.gov.tr/dataset/public-transport-gtfs-data"
+                            href="https://data.ibb.gov.tr/dataset/iett-gtfs-verisi"
                             target="_blank"
                             rel="noopener"
                             underline="hover"
