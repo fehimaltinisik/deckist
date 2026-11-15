@@ -1,62 +1,66 @@
 import os.path
 import shutil
-
-import importlib.resources
-from io import BytesIO
+import zipfile
 
 import urllib3
 from loguru import logger
 
+from src.config.csvfiles import GTFS_RESOURCE_DIRECTORY_PATH
 from src.config.csvfiles import GTFS_RESOURCE_PATH
 from src.config.logging import configure_logger
 
-DIR_PATH: str = os.path.dirname(os.path.realpath(__file__))
-WEBSERVICE_PROJECT_ROOT_PATH: str = os.path.join(DIR_PATH, '..')
-
-GTFS_TRIPS_DATA_URL = "https://data.ibb.gov.tr/en/dataset/8540e256-6df5-4719-85bc-e64e91508ede/resource/7ff49bdd-b0d2-4a6e-9392-b598f77f5070/download/trips.csv"
-GTFS_STOPS_DATA_URL = "https://data.ibb.gov.tr/en/dataset/8540e256-6df5-4719-85bc-e64e91508ede/resource/2299bc82-983b-4bdf-8520-5cef8c555e29/download/stops.csv"
-GTFS_STOP_TIMES_DATA_URL = "https://data.ibb.gov.tr/en/dataset/8540e256-6df5-4719-85bc-e64e91508ede/resource/23778613-16fe-4d30-b8b8-8ca934ed2978/download/stop_times.csv"
-GTFS_ROUTES_DATA_URL = "https://data.ibb.gov.tr/en/dataset/8540e256-6df5-4719-85bc-e64e91508ede/resource/46dbe388-c8c2-45c4-ac72-c06953de56a2/download/routes.csv"
+GTFS_TRIPS_DATA_URL = "https://data.ibb.gov.tr/dataset/8540e256-6df5-4719-85bc-e64e91508ede/resource/7ff49bdd-b0d2-4a6e-9392-b598f77f5070/download/trips.csv"
+GTFS_STOPS_DATA_URL = "https://data.ibb.gov.tr/dataset/8540e256-6df5-4719-85bc-e64e91508ede/resource/2299bc82-983b-4bdf-8520-5cef8c555e29/download/stops.csv"
+GTFS_STOP_TIMES_ZIP_DATA_URL = "https://data.ibb.gov.tr/dataset/8540e256-6df5-4719-85bc-e64e91508ede/resource/80401c1c-c240-4a32-8f40-ef697100a681/download/stop_times.zip"
+GTFS_ROUTES_DATA_URL = "https://data.ibb.gov.tr/dataset/8540e256-6df5-4719-85bc-e64e91508ede/resource/46dbe388-c8c2-45c4-ac72-c06953de56a2/download/routes.csv"
+ROUTE_PATHS_DATA_URL = "https://data.ibb.gov.tr/dataset/b48d2095-851c-413c-8d36-87d2310a22b5/resource/4ccb4d29-c2b6-414a-b324-d2c9962b18e2/download/iett-hat-guzergahlar-verisi.geojson"
+ROUTE_PATHS_FILENAME = 'iett-hat-guzergahlari.geojson'
 
 
 def create_resources_directories_if_not_exists():
-    path = os.path.join(WEBSERVICE_PROJECT_ROOT_PATH, *GTFS_RESOURCE_PATH.split('.'))
-    if not os.path.exists(os.path.join(path)):
+    if not os.path.exists(GTFS_RESOURCE_DIRECTORY_PATH):
         logger.info(f'Creating directory: {GTFS_RESOURCE_PATH}')
-        os.makedirs(path, exist_ok=True)
+        os.makedirs(GTFS_RESOURCE_DIRECTORY_PATH, exist_ok=True)
 
 
 create_resources_directories_if_not_exists()
 
 
-GTFS_DATA_SAVE_PATH: str = importlib.resources.path(GTFS_RESOURCE_PATH, '').__str__()
-
-
-def download_file(http_client, url, encoding):
-    filename = url.split('/')[-1]
+def download_file(http_client, url, filename=None) -> str:
+    filename = filename or url.split('/')[-1]
+    file_path = os.path.join(GTFS_RESOURCE_DIRECTORY_PATH, filename)
     logger.debug(f'Downloading file: {filename}...')
     with (
         http_client.request('GET', url, preload_content=False) as response,
-        open(os.path.join(WEBSERVICE_PROJECT_ROOT_PATH, *GTFS_DATA_SAVE_PATH.split('.'), filename), 'wb') as file
+        open(file_path, 'wb') as file
     ):
-        content = response.read().decode(encoding)
-        content = content.encode('UTF-16LE')
-        buffer = BytesIO()
-        buffer.write(content)
-        buffer.seek(0)
-
-        shutil.copyfileobj(buffer, file)
+        shutil.copyfileobj(response, file)
 
     logger.info(f'File downloaded: {filename}')
+
+    return file_path
+
+
+def download_zipped_csv(http_client, url, member, filename):
+    zip_path = download_file(http_client, url)
+    with (
+        zipfile.ZipFile(zip_path) as archive,
+        archive.open(member) as source,
+        open(os.path.join(GTFS_RESOURCE_DIRECTORY_PATH, filename), 'wb') as target
+    ):
+        shutil.copyfileobj(source, target)
+    os.remove(zip_path)
+    logger.info(f'File extracted: {member} as {filename}')
 
 
 def main():
     configure_logger()
     http_client = urllib3.PoolManager()
-    download_file(http_client, GTFS_TRIPS_DATA_URL, 'windows-1254')
-    download_file(http_client, GTFS_STOPS_DATA_URL, 'windows-1254')
-    download_file(http_client, GTFS_STOP_TIMES_DATA_URL, 'utf-8')
-    download_file(http_client, GTFS_ROUTES_DATA_URL, 'utf-8')
+    download_file(http_client, GTFS_TRIPS_DATA_URL)
+    download_file(http_client, GTFS_STOPS_DATA_URL)
+    download_zipped_csv(http_client, GTFS_STOP_TIMES_ZIP_DATA_URL, 'stop_times.txt', 'stop_times.csv')
+    download_file(http_client, GTFS_ROUTES_DATA_URL)
+    download_file(http_client, ROUTE_PATHS_DATA_URL, ROUTE_PATHS_FILENAME)
 
     exit()
 

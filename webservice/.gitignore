@@ -233,6 +233,7 @@ fabric.properties
 .idea/caches/build_file_checksums.ser
 
 # SQLite
+*.db
 *.db-*
 *.db-journal
 

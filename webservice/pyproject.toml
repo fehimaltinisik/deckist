@@ -1,12 +1,6 @@
 [tool.pytest.ini_options]
 minversion = '7.0'
-testpaths = [
-    'tests/entities',
-    'tests/httpclients',
-    'tests/models',
-    'tests/services',
-    'tests/routers',
-    'tests/repositories']
+testpaths = ['tests']
 env_override_existing_values = 1
 env_files = ['.test.env']
 addopts = "-ra -q"

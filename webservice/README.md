@@ -25,21 +25,56 @@ To run webservice locally, follow these steps:
 
 ### Init Db
 Project uses small SQLite database to store GTFS data. You can create the database by following setups below.
+Run the scripts from the `webservice` directory with `PYTHONPATH=.` so they can import `src`.
 
-4. `scripts/downloadgtfs.py`: Run this script is used to download GTFS (General Transit Feed Specification) data from various URLs. It saves the downloaded data under **src.resources.gtfs**
+Data sources:
+- [İETT GTFS](https://data.ibb.gov.tr/dataset/iett-gtfs-verisi) for routes, trips, stops and stop times. İETT is Istanbul's public bus operator.
+- [İETT Hat Güzergahları](https://data.ibb.gov.tr/dataset/iett-hat-guzergahlari) ("line routes") for on-road route geometries.
+
+Downloaded files and the database are gitignored.
+
+4. `scripts/downloadgtfs.py`: Downloads the GTFS CSVs (stop times come from `stop_times.zip`) and the route geometry GeoJSON into **src.resources.gtfs**.
 ```bash
 python scripts/downloadgtfs.py
 ```
 
-5. `scripts/preprocessgtfs.py`: Run this script is used to preprocess the downloaded GTFS data. It reads the data from CSV files, fixes any issues, and saves the cleaned data back to CSV files.
+5. `scripts/preprocessgtfs.py`: Reads the raw UTF-8 files, repairs double-encoded route names, normalizes stop coordinates (stops without usable coordinates are dropped together with their stop times, and trips whose first or last stop is untimed or dropped are removed) and writes `*.clean.csv` files.
 ```bash
 python scripts/preprocessgtfs.py
 ```
 
-6. `scripts/savegtfstodb.py`: Run this script is used to save the preprocessed GTFS data to a SQLite database. It reads the data from the cleaned CSV files and saves it to the database using the Tortoise ORM. Running this script will create a local SQLite database.
+6. `scripts/savegtfstodb.py`: Saves the cleaned CSVs to a SQLite database using the Tortoise ORM. Start from an empty database; running this script will create a local SQLite database.
 ```bash
 python scripts/savegtfstodb.py
 ```
+
+7. `scripts/saveroutepathstodb.py`: Loads the Hat Güzergahları GeoJSON into the `route_path` table of the same database. Lines are simplified (~5 m) and rounded to 5 decimals. The API uses them to draw trips on the road.
+```bash
+python scripts/saveroutepathstodb.py
+```
+
+### How trips are drawn
+
+GTFS has no shapes, so every trip is matched to a route line from the `route_path` table:
+
+1. A route line whose code (`GUZERGAH_KODU`) equals the GTFS `route_code`, for example `500T_G_D0`.
+2. Otherwise a route line of the same line and direction (`YON`: `GİDİŞ` is direction `0`, `DÖNÜŞ` is `1`), preferring the main departure (`DEPAR_NO` `0`), then the longest.
+
+The trip's stops are projected onto that line in order (`src/services/geometry.py`). The line is trimmed to the first
+and last stop, and the time between the first departure and the last arrival is spread over the distance along it.
+A few middle stops may sit off the line; the first and last stops must fit.
+
+When a trip has no route line, or its stops do not fit, it is drawn as straight segments between stops with times
+spread by haversine distance. With the 2026 feed this affects about 0.05% of trips.
+
+### Tests
+```bash
+python -m pytest
+```
+
+### Configuration
+
+Environment variables are listed in `.env.example`. They are read from the process environment.
 
 ## Running the Project
 

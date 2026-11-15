@@ -24,7 +24,7 @@ def minimize_trip_geometries(routes_with_trip_geometries: RoutesWithTripGeometri
     for trip_id, trip_geometry in routes_with_trip_geometries.trip_geometries_by_trip_ids.items():
         trip_timestamps_by_trip_ids[trip_id] = [coordinate[3] for coordinate in trip_geometry.coordinates]
 
-    for path_id, (stop_ids, trip_geometries_grouper) in enumerate(groupby(routes_with_trip_geometries.trip_geometries, key=lambda tg: str(tg.stop_ids))):
+    for path_id, (stop_ids, trip_geometries_grouper) in enumerate(groupby(routes_with_trip_geometries.trip_geometries, key=lambda tg: (tg.properties.get('route_path_id'), str(tg.stop_ids)))):
         trip_geometries: List[TripGeometry] = list(trip_geometries_grouper)
         trip_ids: List[int] = [trip_geometry.trip_id for trip_geometry in trip_geometries]
         trip_ids_by_path_ids[path_id] = trip_ids
