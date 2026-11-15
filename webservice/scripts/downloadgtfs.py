@@ -2,16 +2,12 @@ import os.path
 import shutil
 import zipfile
 
-import importlib.resources
-
 import urllib3
 from loguru import logger
 
+from src.config.csvfiles import GTFS_RESOURCE_DIRECTORY_PATH
 from src.config.csvfiles import GTFS_RESOURCE_PATH
 from src.config.logging import configure_logger
-
-DIR_PATH: str = os.path.dirname(os.path.realpath(__file__))
-WEBSERVICE_PROJECT_ROOT_PATH: str = os.path.join(DIR_PATH, '..')
 
 GTFS_TRIPS_DATA_URL = "https://data.ibb.gov.tr/dataset/8540e256-6df5-4719-85bc-e64e91508ede/resource/7ff49bdd-b0d2-4a6e-9392-b598f77f5070/download/trips.csv"
 GTFS_STOPS_DATA_URL = "https://data.ibb.gov.tr/dataset/8540e256-6df5-4719-85bc-e64e91508ede/resource/2299bc82-983b-4bdf-8520-5cef8c555e29/download/stops.csv"
@@ -22,21 +18,17 @@ ROUTE_PATHS_FILENAME = 'iett-hat-guzergahlari.geojson'
 
 
 def create_resources_directories_if_not_exists():
-    path = os.path.join(WEBSERVICE_PROJECT_ROOT_PATH, *GTFS_RESOURCE_PATH.split('.'))
-    if not os.path.exists(os.path.join(path)):
+    if not os.path.exists(GTFS_RESOURCE_DIRECTORY_PATH):
         logger.info(f'Creating directory: {GTFS_RESOURCE_PATH}')
-        os.makedirs(path, exist_ok=True)
+        os.makedirs(GTFS_RESOURCE_DIRECTORY_PATH, exist_ok=True)
 
 
 create_resources_directories_if_not_exists()
 
 
-GTFS_DATA_SAVE_PATH: str = importlib.resources.path(GTFS_RESOURCE_PATH, '').__str__()
-
-
 def download_file(http_client, url, filename=None) -> str:
     filename = filename or url.split('/')[-1]
-    file_path = os.path.join(GTFS_DATA_SAVE_PATH, filename)
+    file_path = os.path.join(GTFS_RESOURCE_DIRECTORY_PATH, filename)
     logger.debug(f'Downloading file: {filename}...')
     with (
         http_client.request('GET', url, preload_content=False) as response,
@@ -54,7 +46,7 @@ def download_zipped_csv(http_client, url, member, filename):
     with (
         zipfile.ZipFile(zip_path) as archive,
         archive.open(member) as source,
-        open(os.path.join(GTFS_DATA_SAVE_PATH, filename), 'wb') as target
+        open(os.path.join(GTFS_RESOURCE_DIRECTORY_PATH, filename), 'wb') as target
     ):
         shutil.copyfileobj(source, target)
     os.remove(zip_path)

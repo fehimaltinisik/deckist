@@ -1,6 +1,6 @@
-import importlib.resources
 import json
 import math
+import os.path
 from typing import Dict
 from typing import List
 from typing import Optional
@@ -10,10 +10,10 @@ from loguru import logger
 from tortoise import run_async
 
 from src.clients import TortoiseOrm
-from src.config.csvfiles import GTFS_RESOURCE_PATH
+from src.config.csvfiles import GTFS_RESOURCE_DIRECTORY_PATH
 from src.repositories import route_path_repository
 
-ROUTE_PATHS_GEOJSON_PATH: str = importlib.resources.path(GTFS_RESOURCE_PATH, 'iett-hat-guzergahlari.geojson').__str__()
+ROUTE_PATHS_GEOJSON_PATH: str = os.path.join(GTFS_RESOURCE_DIRECTORY_PATH, 'iett-hat-guzergahlari.geojson')
 DIRECTION_IDS_BY_YON: Dict[str, int] = {'GİDİŞ': 0, 'DÖNÜŞ': 1}
 SIMPLIFY_TOLERANCE_IN_METERS: float = 5.0
 COORDINATE_DECIMALS: int = 5

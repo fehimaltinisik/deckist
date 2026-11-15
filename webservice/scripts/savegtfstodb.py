@@ -1,4 +1,4 @@
-import importlib.resources
+import os.path
 
 import numpy as np
 import pandas as pd
@@ -8,17 +8,17 @@ from tortoise import run_async
 
 from src.clients import TortoiseOrm
 from src.config.csvfiles import GTFS_DATA_CSV_FILE_READ_OPTIONS
-from src.config.csvfiles import GTFS_RESOURCE_PATH
+from src.config.csvfiles import GTFS_RESOURCE_DIRECTORY_PATH
 from src.repositories import route_repository
 from src.repositories import stop_repository
 from src.repositories import trip_repository
 from src.repositories import stop_time_repository
 
 
-ROUTES_CSV_PATH: str = importlib.resources.path(GTFS_RESOURCE_PATH, 'routes.clean.csv').__str__()
-TRIPS_CSV_PATH: str = importlib.resources.path(GTFS_RESOURCE_PATH, 'trips.clean.csv').__str__()
-STOPS_CSV_PATH: str = importlib.resources.path(GTFS_RESOURCE_PATH, 'stops.clean.csv').__str__()
-STOP_TIMES_CSV_PATH: str = importlib.resources.path(GTFS_RESOURCE_PATH, 'stop_times.clean.csv').__str__()
+ROUTES_CSV_PATH: str = os.path.join(GTFS_RESOURCE_DIRECTORY_PATH, 'routes.clean.csv')
+TRIPS_CSV_PATH: str = os.path.join(GTFS_RESOURCE_DIRECTORY_PATH, 'trips.clean.csv')
+STOPS_CSV_PATH: str = os.path.join(GTFS_RESOURCE_DIRECTORY_PATH, 'stops.clean.csv')
+STOP_TIMES_CSV_PATH: str = os.path.join(GTFS_RESOURCE_DIRECTORY_PATH, 'stop_times.clean.csv')
 
 logger.debug("Found all GTFS resources...")
 

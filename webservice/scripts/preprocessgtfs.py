@@ -1,4 +1,3 @@
-import importlib.resources
 import os.path
 import re
 from datetime import datetime
@@ -14,7 +13,7 @@ from pandas import DataFrame
 from src.config.csvfiles import GTFS_DATA_ENCODING
 from src.config.csvfiles import GTFS_RAW_CSV_FILE_READ_OPTIONS
 from src.config.csvfiles import GTFS_RAW_STOP_TIMES_CSV_FILE_READ_OPTIONS
-from src.config.csvfiles import GTFS_RESOURCE_PATH
+from src.config.csvfiles import GTFS_RESOURCE_DIRECTORY_PATH
 from src.config.logging import configure_logger
 
 TIME_FORMATS_REGEX_MATCHER = r'(\d{2}):(\d{2}):(\d{2})'
@@ -24,13 +23,10 @@ BUS_ROUTE_TYPE: str = '3'
 LATITUDE_BOUNDS: Tuple[float, float] = (40.5, 41.8)
 LONGITUDE_BOUNDS: Tuple[float, float] = (27.5, 30.0)
 
-DIR_PATH: str = os.path.dirname(os.path.realpath(__file__))
-WEBSERVICE_PROJECT_ROOT_PATH: str = os.path.join(DIR_PATH, '..')
-
-ROUTES_CSV_PATH: str = importlib.resources.path(GTFS_RESOURCE_PATH, 'routes.csv').__str__()
-TRIPS_CSV_PATH: str = importlib.resources.path(GTFS_RESOURCE_PATH, 'trips.csv').__str__()
-STOPS_CSV_PATH: str = importlib.resources.path(GTFS_RESOURCE_PATH, 'stops.csv').__str__()
-STOP_TIMES_CSV_PATH: str = importlib.resources.path(GTFS_RESOURCE_PATH, 'stop_times.csv').__str__()
+ROUTES_CSV_PATH: str = os.path.join(GTFS_RESOURCE_DIRECTORY_PATH, 'routes.csv')
+TRIPS_CSV_PATH: str = os.path.join(GTFS_RESOURCE_DIRECTORY_PATH, 'trips.csv')
+STOPS_CSV_PATH: str = os.path.join(GTFS_RESOURCE_DIRECTORY_PATH, 'stops.csv')
+STOP_TIMES_CSV_PATH: str = os.path.join(GTFS_RESOURCE_DIRECTORY_PATH, 'stop_times.csv')
 
 
 def is_timestamp_broken(time_str):
@@ -111,7 +107,7 @@ def preprocess_routes():
 def preprocess_trips(trip_ids: Set[str]):
     trips: DataFrame = pd.read_csv(TRIPS_CSV_PATH, **GTFS_RAW_CSV_FILE_READ_OPTIONS)
     has_stop_times = trips['trip_id'].isin(trip_ids)
-    logger.warning(f'Dropping {(~has_stop_times).sum()} trips without timed first and last stops')
+    logger.warning(f'Dropping {(~has_stop_times).sum()} trips without timed and located first and last stops')
     trips = trips[has_stop_times]
     trips.to_csv(_clean_csv_path('trips.clean.csv'), index=False, encoding=GTFS_DATA_ENCODING)
     logger.info(f'Preprocessed {trips.shape[0]} trips')
@@ -133,11 +129,10 @@ def preprocess_stops() -> Set[str]:
 
 def preprocess_stop_times(stop_ids: Set[str]) -> Set[str]:
     stop_times: DataFrame = pd.read_csv(STOP_TIMES_CSV_PATH, **GTFS_RAW_STOP_TIMES_CSV_FILE_READ_OPTIONS)
+    trip_ids = _find_trip_ids_with_timed_and_located_end_stops(stop_times, stop_ids)
     has_stop = stop_times['stop_id'].isin(stop_ids)
     logger.warning(f'Dropping {(~has_stop).sum()} stop_times of dropped stops')
-    stop_times = stop_times[has_stop].copy()
-    trip_ids = _find_trip_ids_with_timed_first_and_last_stops(stop_times)
-    stop_times = stop_times[stop_times['trip_id'].isin(trip_ids)].copy()
+    stop_times = stop_times[has_stop & stop_times['trip_id'].isin(trip_ids)].copy()
     stop_times['arrival_time'] = stop_times['arrival_time'].apply(fix_broken_timestamp)
     stop_times['departure_time'] = stop_times['departure_time'].apply(fix_broken_timestamp)
     stop_times.to_csv(_clean_csv_path('stop_times.clean.csv'), index=False, encoding=GTFS_DATA_ENCODING)
@@ -154,17 +149,18 @@ def main():
     preprocess_trips(trip_ids)
 
 
-def _find_trip_ids_with_timed_first_and_last_stops(stop_times: DataFrame) -> Set[str]:
+def _find_trip_ids_with_timed_and_located_end_stops(stop_times: DataFrame, stop_ids: Set[str]) -> Set[str]:
     ordered = stop_times.assign(sequence=stop_times['stop_sequence'].astype(int)).sort_values(['trip_id', 'sequence'])
     is_timed = (ordered['arrival_time'] != '') & (ordered['departure_time'] != '')
-    by_trip = is_timed.groupby(ordered['trip_id'])
-    has_timed_ends = by_trip.first() & by_trip.last()
+    is_usable = is_timed & ordered['stop_id'].isin(stop_ids)
+    by_trip = is_usable.groupby(ordered['trip_id'])
+    has_usable_ends = by_trip.first() & by_trip.last()
 
-    return set(has_timed_ends[has_timed_ends].index)
+    return set(has_usable_ends[has_usable_ends].index)
 
 
 def _clean_csv_path(filename: str) -> str:
-    return os.path.join(WEBSERVICE_PROJECT_ROOT_PATH, *GTFS_RESOURCE_PATH.split('.'), filename)
+    return os.path.join(GTFS_RESOURCE_DIRECTORY_PATH, filename)
 
 
 def _to_cp1252_byte(char: str) -> int:
